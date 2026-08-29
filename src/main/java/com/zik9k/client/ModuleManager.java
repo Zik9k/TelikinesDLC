@@ -14,6 +14,16 @@ public final class ModuleManager {
         if (!MODULES.isEmpty()) {
             return;
         }
+
+        register(new Module("KillAura", "Attack nearby targets", ModuleCategory.COMBAT) { });
+        register(new Module("AimAssist", "Assist target rotation", ModuleCategory.COMBAT) { });
+        register(new Module("Speed", "Increase movement speed", ModuleCategory.MOVEMENT) { });
+        register(new Module("Sprint", "Automatic sprint", ModuleCategory.MOVEMENT) { });
+        register(new Module("ESP", "Highlight entities", ModuleCategory.RENDER) { });
+        register(new Module("FullBright", "Brighten dark areas", ModuleCategory.RENDER) { });
+        register(new Module("AutoArmor", "Equip better armor", ModuleCategory.PLAYER) { });
+        register(new Module("NoFall", "Prevent fall damage", ModuleCategory.PLAYER) { });
+        register(new Module("ClickGUI", "Open the client menu", ModuleCategory.MISC) { });
         register(new Module("Example", "Placeholder module", ModuleCategory.MISC) { });
     }
 
