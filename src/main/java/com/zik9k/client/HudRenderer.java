@@ -47,6 +47,17 @@ public final class HudRenderer {
         context.drawText(client.textRenderer, Text.literal(title), x + 8, y + 6, 0xFFF1EAF5, true);
     }
 
+    /** Original TelikinesDLC TL mark: T base with a rotated L layered across it. */
+    private static void drawTlMark(DrawContext context, int x, int y, int accent) {
+        context.fill(x, y, x + 28, y + 28, 0x7A100B18);
+        context.fill(x, y, x + 2, y + 28, accent);
+        context.fill(x + 6, y + 4, x + 22, y + 7, accent);      // T top
+        context.fill(x + 12, y + 6, x + 16, y + 22, accent);     // T stem
+        context.fill(x + 8, y + 10, x + 12, y + 13, 0xFFF1EAF5); // rotated L cross stroke
+        context.fill(x + 8, y + 13, x + 20, y + 16, 0xFFF1EAF5);
+        context.fill(x + 8, y + 16, x + 11, y + 22, 0xFFF1EAF5);
+    }
+
     private static void drawActiveModules(DrawContext context, MinecraftClient client, int accent) {
         List<Module> active = ModuleManager.getModules().stream()
                 .filter(Module::isEnabled)
@@ -84,20 +95,22 @@ public final class HudRenderer {
     private static void drawInfoPanel(DrawContext context, MinecraftClient client, int accent) {
         int x = 8;
         int y = client.getWindow().getScaledHeight() - 75;
-        int width = 206;
+        int width = 230;
         int height = 67;
         drawPanel(context, x, y, width, height, accent);
-        drawTitle(context, client, "TelikinesDLC", x, y, accent);
+        drawTlMark(context, x + 7, y + 5, accent);
+        context.drawText(client.textRenderer, Text.literal("TELIKINESDLC"), x + 42, y + 6, 0xFFF1EAF5, true);
+        context.drawText(client.textRenderer, Text.literal("1.21.11"), x + 42, y + 20, accent, false);
 
         int fps = client.getCurrentFps();
         int ping = getPing(client);
         String coords = String.format("XYZ %d %d %d", client.player.getBlockX(), client.player.getBlockY(), client.player.getBlockZ());
         String clock = LocalTime.now().format(CLOCK);
 
-        context.drawText(client.textRenderer, Text.literal("FPS  " + fps), x + 8, y + 24, 0xFFD6CCD9, false);
-        context.drawText(client.textRenderer, Text.literal("Ping " + (ping >= 0 ? ping + " ms" : "--")), x + 84, y + 24, 0xFFD6CCD9, false);
-        context.drawText(client.textRenderer, Text.literal(coords), x + 8, y + 40, 0xFFAFA5B3, false);
-        context.drawText(client.textRenderer, Text.literal(clock), x + width - 56, y + 40, accent, false);
+        context.drawText(client.textRenderer, Text.literal("FPS  " + fps), x + 8, y + 42, 0xFFD6CCD9, false);
+        context.drawText(client.textRenderer, Text.literal("Ping " + (ping >= 0 ? ping + " ms" : "--")), x + 82, y + 42, 0xFFD6CCD9, false);
+        context.drawText(client.textRenderer, Text.literal(coords), x + 8, y + 56, 0xFFAFA5B3, false);
+        context.drawText(client.textRenderer, Text.literal(clock), x + width - 58, y + 56, accent, false);
     }
 
     private static int getPing(MinecraftClient client) {
@@ -112,7 +125,7 @@ public final class HudRenderer {
         if (client.getNetworkHandler() == null) return;
 
         List<PlayerListEntry> staff = client.getNetworkHandler().getPlayerList().stream()
-                .filter(entry -> entry.getGameMode() != null && entry.getGameMode().isSurvivalLike() == false)
+                .filter(entry -> entry.getGameMode() != null && !entry.getGameMode().isSurvivalLike())
                 .sorted(Comparator.comparing(PlayerListEntry::getProfileName))
                 .toList();
         if (staff.isEmpty()) return;
