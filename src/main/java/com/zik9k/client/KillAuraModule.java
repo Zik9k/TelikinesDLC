@@ -2,7 +2,6 @@ package com.zik9k.client;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,6 +16,7 @@ public final class KillAuraModule extends Module {
     private int range = 4;
     private int cps = 8;
     private long nextAttackTime;
+    private LivingEntity currentTarget;
 
     public KillAuraModule() {
         super("Kill Aura", "Automatically attacks nearby selected living entities", ModuleCategory.COMBAT);
@@ -28,13 +28,18 @@ public final class KillAuraModule extends Module {
     }
 
     @Override
+    protected void onDisable() {
+        currentTarget = null;
+    }
+
+    @Override
     public void onTick() {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
-        if (player == null || client.world == null || client.interactionManager == null || client.currentScreen != null) return;
-
-        if (System.currentTimeMillis() < nextAttackTime) return;
-        if (player.getAttackCooldownProgress(0.0f) < 1.0f) return;
+        if (player == null || client.world == null || client.interactionManager == null || client.currentScreen != null) {
+            currentTarget = null;
+            return;
+        }
 
         LivingEntity target = client.world.getEntitiesByClass(
                         LivingEntity.class,
@@ -43,8 +48,12 @@ public final class KillAuraModule extends Module {
                 ).stream()
                 .min(Comparator.comparingDouble(player::squaredDistanceTo))
                 .orElse(null);
+        currentTarget = target;
 
         if (target == null) return;
+        if (System.currentTimeMillis() < nextAttackTime) return;
+        if (player.getAttackCooldownProgress(0.0f) < 1.0f) return;
+
         client.interactionManager.attackEntity(player, target);
         player.swingHand(Hand.MAIN_HAND);
         nextAttackTime = System.currentTimeMillis() + Math.max(1L, 1000L / Math.max(1, cps));
@@ -60,6 +69,7 @@ public final class KillAuraModule extends Module {
         return mobs;
     }
 
+    public LivingEntity currentTarget() { return currentTarget; }
     public boolean players() { return players; }
     public boolean mobs() { return mobs; }
     public boolean animals() { return animals; }
