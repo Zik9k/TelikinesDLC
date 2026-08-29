@@ -3,6 +3,7 @@ package com.zik9k.client;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.entity.LivingEntity;
@@ -23,7 +24,7 @@ public final class TargetEspWorldRenderer {
 
     private static void render(WorldRenderContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || context.consumers() == null || context.camera() == null) return;
+        if (client.world == null || client.player == null || context.consumers() == null) return;
 
         LivingEntity target = null;
         for (Module module : ModuleManager.getModules()) {
@@ -39,9 +40,10 @@ public final class TargetEspWorldRenderer {
         if (target == null || !target.isAlive()) return;
         if (client.player.squaredDistanceTo(target) > 64.0D * 64.0D) return;
 
-        float partial = context.tickCounter().getTickProgress(false);
+        float partial = client.getRenderTickCounter().getTickProgress(false);
         Vec3d center = target.getLerpedPos(partial).add(0.0D, target.getHeight() * 0.58D, 0.0D);
-        Vec3d camera = context.camera().getCameraPos();
+        Camera cameraObject = client.gameRenderer.getCamera();
+        Vec3d camera = cameraObject.getCameraPos();
 
         float cooldown = client.player.getAttackCooldownProgress(partial);
         if (cooldown < previousCooldown - 0.20F) {
@@ -59,8 +61,8 @@ public final class TargetEspWorldRenderer {
         float g = hitFlash ? 0.10F : ((accent >> 8) & 0xFF) / 255.0F;
         float b = hitFlash ? 0.10F : (accent & 0xFF) / 255.0F;
 
-        Vector3fc horizontal = context.camera().getHorizontalPlane();
-        Vector3fc vertical = context.camera().getVerticalPlane();
+        Vector3fc horizontal = cameraObject.getHorizontalPlane();
+        Vector3fc vertical = cameraObject.getVerticalPlane();
         Vec3d right = new Vec3d(horizontal.x(), horizontal.y(), horizontal.z());
         Vec3d up = new Vec3d(vertical.x(), vertical.y(), vertical.z());
 
@@ -95,7 +97,7 @@ public final class TargetEspWorldRenderer {
 
     private static void line(WorldRenderContext context, VertexConsumer consumer, Vec3d from, Vec3d to,
                              float r, float g, float b, float a) {
-        Vec3d normal = context.camera().getCameraPos().subtract(from).normalize();
+        Vec3d normal = MinecraftClient.getInstance().gameRenderer.getCamera().getCameraPos().subtract(from).normalize();
         consumer.vertex(context.matrices().peek(), (float) from.x, (float) from.y, (float) from.z)
                 .color(r, g, b, a).normal((float) normal.x, (float) normal.y, (float) normal.z);
         consumer.vertex(context.matrices().peek(), (float) to.x, (float) to.y, (float) to.z)
