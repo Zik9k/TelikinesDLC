@@ -10,8 +10,7 @@ public final class ModuleManager {
     private static final List<Module> MODULES = new ArrayList<>();
     private static boolean initialized;
 
-    private ModuleManager() {
-    }
+    private ModuleManager() { }
 
     public static void init() {
         if (initialized) return;
@@ -20,31 +19,21 @@ public final class ModuleManager {
         register(new FullBrightModule());
         register(new TriggerBotModule());
         register(new ESPModule());
+        register(new BlockOverlayModule());
 
         for (Module module : MODULES) {
-            if (ClientConfig.isModuleEnabled(module.getName())) {
-                module.setEnabled(true);
-            }
+            if (ClientConfig.isModuleEnabled(module.getName())) module.setEnabled(true);
         }
     }
 
-    private static void register(Module module) {
-        MODULES.add(module);
-    }
+    private static void register(Module module) { MODULES.add(module); }
 
     public static void tick(MinecraftClient client) {
         init();
-        for (Module module : MODULES) {
-            if (module.isEnabled()) {
-                module.onTick();
-            }
-        }
+        for (Module module : MODULES) if (module.isEnabled()) module.onTick();
     }
 
-    public static List<Module> getModules() {
-        init();
-        return Collections.unmodifiableList(MODULES);
-    }
+    public static List<Module> getModules() { init(); return Collections.unmodifiableList(MODULES); }
 
     public static List<Module> getModules(ModuleCategory category) {
         init();
