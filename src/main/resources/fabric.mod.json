@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "zik9k-client",
+  "version": "${version}",
+  "name": "Zik9k Client",
+  "description": "A client-side Fabric project for Minecraft 1.21.11.",
+  "authors": ["Zik9k"],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.zik9k.client.Zik9kClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
