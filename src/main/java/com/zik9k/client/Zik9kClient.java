@@ -39,6 +39,10 @@ public final class Zik9kClient implements ClientModInitializer {
 
     private static final class ClickGuiScreen extends Screen {
         private int selectedTab;
+        private String searchQuery = "";
+        private boolean searchFocused;
+        private long lastBlinkTime;
+        private boolean cursorVisible = true;
 
         private ClickGuiScreen() {
             super(Text.literal("TelikinesDLC"));
@@ -46,14 +50,48 @@ public final class Zik9kClient implements ClientModInitializer {
 
         @Override
         protected void init() {
+            searchFocused = false;
+            lastBlinkTime = System.currentTimeMillis();
+        }
+
+        private int panelLeft() {
+            return (width - PANEL_WIDTH) / 2;
+        }
+
+        private int panelTop() {
+            return (height - PANEL_HEIGHT) / 2;
+        }
+
+        private int searchLeft() {
+            return panelLeft() + SIDEBAR_WIDTH + 1 + 680 - SIDEBAR_WIDTH - 20 - 190;
+        }
+
+        private int searchRight() {
+            return panelLeft() + PANEL_WIDTH - 20;
+        }
+
+        private int searchTop() {
+            return panelTop() + 13;
+        }
+
+        private int searchBottom() {
+            return panelTop() + 33;
+        }
+
+        private boolean isSearchMatch(String name, String description) {
+            if (searchQuery.isBlank()) {
+                return true;
+            }
+            String query = searchQuery.toLowerCase();
+            return name.toLowerCase().contains(query) || description.toLowerCase().contains(query);
         }
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
             context.fill(0, 0, width, height, 0x8A08060D);
 
-            int left = (width - PANEL_WIDTH) / 2;
-            int top = (height - PANEL_HEIGHT) / 2;
+            int left = panelLeft();
+            int top = panelTop();
             int right = left + PANEL_WIDTH;
             int bottom = top + PANEL_HEIGHT;
 
@@ -97,39 +135,130 @@ public final class Zik9kClient implements ClientModInitializer {
 
             int searchRight = right - 20;
             int searchLeft = searchRight - 190;
-            context.fill(searchLeft, top + 13, searchRight, top + 33, 0xFF24202B);
-            context.drawText(textRenderer, Text.literal("Search"), searchLeft + 11, top + 18, 0xFF706775, false);
+            boolean hasQuery = !searchQuery.isEmpty();
+            boolean hovered = mouseX >= searchLeft && mouseX <= searchRight && mouseY >= searchTop() && mouseY <= searchBottom();
+            int searchBg = searchFocused ? 0xFF2B2634 : hovered ? 0xFF292430 : 0xFF24202B;
+            context.fill(searchLeft, searchTop(), searchRight, searchBottom(), searchBg);
+
+            if (hasQuery) {
+                String visible = searchQuery.length() > 24 ? searchQuery.substring(0, 24) : searchQuery;
+                context.drawText(textRenderer, Text.literal(visible), searchLeft + 11, top + 18, 0xFFD9D0DD, false);
+                if (searchFocused && System.currentTimeMillis() - lastBlinkTime > 500) {
+                    cursorVisible = !cursorVisible;
+                    lastBlinkTime = System.currentTimeMillis();
+                }
+                if (searchFocused && cursorVisible) {
+                    int cursorX = searchLeft + 11 + textRenderer.getWidth(visible) + 1;
+                    context.fill(cursorX, top + 17, cursorX + 1, top + 30, 0xFFD9D0DD);
+                }
+            } else if (searchFocused) {
+                context.drawText(textRenderer, Text.literal("Search modules..."), searchLeft + 11, top + 18, 0xFF7D7383, false);
+                if (System.currentTimeMillis() - lastBlinkTime > 500) {
+                    cursorVisible = !cursorVisible;
+                    lastBlinkTime = System.currentTimeMillis();
+                }
+                if (cursorVisible) {
+                    context.fill(searchLeft + 11, top + 17, searchLeft + 12, top + 30, 0xFFD9D0DD);
+                }
+            } else {
+                context.drawText(textRenderer, Text.literal("Search"), searchLeft + 11, top + 18, 0xFF706775, false);
+            }
             context.drawText(textRenderer, Text.literal("/"), searchRight - 18, top + 18, 0xFF706775, false);
 
             context.drawText(textRenderer, Text.literal(TABS[selectedTab]), contentLeft + 24, top + 68, 0xFFF4EDF8, false);
-            context.drawText(textRenderer, Text.literal("Empty"), contentLeft + 24, top + 88, 0xFF6F6673, false);
+            if (searchQuery.isBlank()) {
+                context.drawText(textRenderer, Text.literal("Empty"), contentLeft + 24, top + 88, 0xFF6F6673, false);
+            } else {
+                context.drawText(textRenderer, Text.literal("Search: " + searchQuery), contentLeft + 24, top + 88, 0xFF8D8291, false);
+                context.drawCenteredTextWithShadow(
+                        textRenderer,
+                        Text.literal("No matching modules"),
+                        (contentLeft + right) / 2,
+                        (top + bottom) / 2 + 11,
+                        0xFF5E5663
+                );
+            }
 
-            int cx = (contentLeft + right) / 2;
-            int cy = (top + bottom) / 2 + 15;
-            context.fill(cx - 28, cy - 28, cx + 28, cy + 28, 0xFF1B1720);
-            context.drawCenteredTextWithShadow(textRenderer, Text.literal("—"), cx, cy - 4, 0xFF5E5663);
+            if (searchQuery.isBlank()) {
+                int cx = (contentLeft + right) / 2;
+                int cy = (top + bottom) / 2 + 15;
+                context.fill(cx - 28, cy - 28, cx + 28, cy + 28, 0xFF1B1720);
+                context.drawCenteredTextWithShadow(textRenderer, Text.literal("—"), cx, cy - 4, 0xFF5E5663);
+            }
 
             super.render(context, mouseX, mouseY, delta);
         }
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button == 0) {
-                int left = (width - PANEL_WIDTH) / 2;
-                int top = (height - PANEL_HEIGHT) / 2;
+            if (button != 0) {
+                return super.mouseClicked(mouseX, mouseY, button);
+            }
 
-                if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
-                    for (int i = 0; i < TABS.length; i++) {
-                        int tabTop = top + 112 + i * 48;
-                        if (mouseY >= tabTop - 8 && mouseY <= tabTop + 28) {
-                            selectedTab = i;
-                            return true;
-                        }
+            int left = panelLeft();
+            int top = panelTop();
+            int right = left + PANEL_WIDTH;
+
+            if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
+                for (int i = 0; i < TABS.length; i++) {
+                    int tabTop = top + 112 + i * 48;
+                    if (mouseY >= tabTop - 8 && mouseY <= tabTop + 28) {
+                        selectedTab = i;
+                        return true;
                     }
                 }
             }
 
+            int searchLeft = right - 210;
+            int searchRight = right - 20;
+            if (mouseX >= searchLeft && mouseX <= searchRight && mouseY >= top + 13 && mouseY <= top + 33) {
+                searchFocused = true;
+                lastBlinkTime = System.currentTimeMillis();
+                cursorVisible = true;
+                return true;
+            }
+
+            searchFocused = false;
             return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        @Override
+        public boolean charTyped(char chr, int modifiers) {
+            if (searchFocused && chr >= 32 && chr != 127 && searchQuery.length() < 48) {
+                searchQuery += chr;
+                lastBlinkTime = System.currentTimeMillis();
+                cursorVisible = true;
+                return true;
+            }
+            return super.charTyped(chr, modifiers);
+        }
+
+        @Override
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+            if (searchFocused) {
+                if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                    searchFocused = false;
+                    return true;
+                }
+                if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+                    if (!searchQuery.isEmpty()) {
+                        searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+                    }
+                    lastBlinkTime = System.currentTimeMillis();
+                    cursorVisible = true;
+                    return true;
+                }
+                if (keyCode == GLFW.GLFW_KEY_DELETE) {
+                    searchQuery = "";
+                    lastBlinkTime = System.currentTimeMillis();
+                    cursorVisible = true;
+                    return true;
+                }
+                if (keyCode == GLFW.GLFW_KEY_A && (modifiers & GLFW.GLFW_MOD_CONTROL) != 0) {
+                    return true;
+                }
+            }
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
         @Override
