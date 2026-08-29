@@ -155,8 +155,29 @@ public final class Zik9kClient implements ClientModInitializer {
         }
 
         @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
             int left = panelLeft(), top = panelTop(), right = left + PANEL_WIDTH, bottom = top + PANEL_HEIGHT;
+
+            if (button == 1) {
+                List<Module> modules = ModuleManager.getModules(ModuleCategory.values()[selectedTab]).stream().filter(this::matches).toList();
+                int cardY = top + 104;
+                int cardX = left + SIDEBAR_WIDTH + 23;
+                int cardRight = right - 20;
+                for (Module module : modules) {
+                    if (cardY > bottom - 28) break;
+                    if (mouseX >= cardX && mouseX <= cardRight && mouseY >= cardY && mouseY <= cardY + 48) {
+                        if (module instanceof TriggerBotModule triggerBot) {
+                            client.setScreen(new TriggerBotSettingsScreen(triggerBot));
+                            return true;
+                        }
+                        return true;
+                    }
+                    cardY += 58;
+                }
+                return super.mouseClicked(mouseX, mouseY, button);
+            }
+
+            if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+
             if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
                 for (int i = 0; i < TABS.length; i++) {
                     int tabTop = top + 112 + i * 48;
