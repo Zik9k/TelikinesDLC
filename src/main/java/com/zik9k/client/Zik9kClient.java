@@ -22,6 +22,8 @@ public final class Zik9kClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ClientConfig.load();
+
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.zik9k.open_gui",
                 InputUtil.Type.KEYSYM,
@@ -48,6 +50,7 @@ public final class Zik9kClient implements ClientModInitializer {
 
         private ClickGuiScreen() {
             super(Text.literal("TelikinesDLC"));
+            avatarIndex = ClientConfig.avatarIndex();
         }
 
         @Override
@@ -56,27 +59,26 @@ public final class Zik9kClient implements ClientModInitializer {
             lastBlinkTime = System.currentTimeMillis();
         }
 
-        private int panelLeft() {
-            return (width - PANEL_WIDTH) / 2;
-        }
+        private int panelLeft() { return (width - PANEL_WIDTH) / 2; }
+        private int panelTop() { return (height - PANEL_HEIGHT) / 2; }
+        private int searchTop() { return panelTop() + 13; }
+        private int searchBottom() { return panelTop() + 33; }
 
-        private int panelTop() {
-            return (height - PANEL_HEIGHT) / 2;
-        }
-
-        private int searchTop() {
-            return panelTop() + 13;
-        }
-
-        private int searchBottom() {
-            return panelTop() + 33;
+        private int accentColor() {
+            return switch (ClientConfig.accent()) {
+                case 1 -> 0xFF8D67FF;
+                case 2 -> 0xFFE26BFF;
+                default -> 0xFFB15CFF;
+            };
         }
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
             MinecraftClient client = MinecraftClient.getInstance();
-            context.fill(0, 0, width, height, 0x8A08060D);
+            int overlayAlpha = Math.max(0, Math.min(255, Math.round(ClientConfig.overlayOpacity() * 255f / 100f)));
+            context.fill(0, 0, width, height, (overlayAlpha << 24) | 0x08060D);
 
+            int accent = accentColor();
             int left = panelLeft();
             int top = panelTop();
             int right = left + PANEL_WIDTH;
@@ -89,17 +91,14 @@ public final class Zik9kClient implements ClientModInitializer {
             context.fill(left + 2, top + 2, left + SIDEBAR_WIDTH, bottom - 2, 0xFF17121E);
             context.fill(left + SIDEBAR_WIDTH, top + 46, right - 2, bottom - 2, 0xFF120F18);
 
-            context.drawText(textRenderer, Text.literal("T"), left + 20, top + 16, 0xFFB26BFF, false);
+            context.drawText(textRenderer, Text.literal("T"), left + 20, top + 16, accent, false);
             context.drawText(textRenderer, Text.literal("TELIKINESDLC"), left + 40, top + 16, 0xFFF4EEF9, false);
 
-            // Clickable profile area with the current Minecraft nickname and selected avatar.
             int avatarX = left + 16;
             int avatarY = top + 58;
             AvatarTextures.draw(context, client, avatarIndex, avatarX, avatarY, 32);
             String username = client.getSession().getUsername();
-            if (username.length() > 13) {
-                username = username.substring(0, 13);
-            }
+            if (username.length() > 13) username = username.substring(0, 13);
             context.drawText(textRenderer, Text.literal(username), left + 58, top + 62, 0xFFEFE8F3, false);
             context.drawText(textRenderer, Text.literal("Click avatar to change"), left + 58, top + 76, 0xFF817787, false);
 
@@ -108,13 +107,21 @@ public final class Zik9kClient implements ClientModInitializer {
                 boolean selected = i == selectedTab;
                 if (selected) {
                     context.fill(left + 10, tabTop - 8, left + SIDEBAR_WIDTH - 10, tabTop + 28, 0xFF2C2038);
-                    context.fill(left + 10, tabTop - 8, left + 13, tabTop + 28, 0xFFB15CFF);
+                    context.fill(left + 10, tabTop - 8, left + 13, tabTop + 28, accent);
                 }
-                int markColor = selected ? 0xFFB96CFF : 0xFF776D7D;
+                int markColor = selected ? accent : 0xFF776D7D;
                 int textColor = selected ? 0xFFF7F1FA : 0xFF8F8794;
                 context.drawText(textRenderer, Text.literal(TAB_MARKS[i]), left + 25, tabTop + 3, markColor, false);
                 context.drawText(textRenderer, Text.literal(TABS[i]), left + 49, tabTop + 3, textColor, false);
             }
+
+            int settingsTop = bottom - 47;
+            boolean settingsHovered = mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10 && mouseY >= settingsTop - 6 && mouseY <= settingsTop + 24;
+            if (settingsHovered) {
+                context.fill(left + 10, settingsTop - 6, left + SIDEBAR_WIDTH - 10, settingsTop + 24, 0xFF28202F);
+            }
+            context.drawText(textRenderer, Text.literal("⚙"), left + 24, settingsTop + 1, settingsHovered ? accent : 0xFF776D7D, false);
+            context.drawText(textRenderer, Text.literal("Settings"), left + 49, settingsTop + 1, settingsHovered ? 0xFFF7F1FA : 0xFF8F8794, false);
 
             int contentLeft = left + SIDEBAR_WIDTH + 1;
             context.fill(contentLeft, top + 2, right - 2, top + 46, 0xFF1A1622);
@@ -127,13 +134,8 @@ public final class Zik9kClient implements ClientModInitializer {
             boolean hovered = mouseX >= searchLeft && mouseX <= searchRight && mouseY >= searchTop() && mouseY <= searchBottom();
             int searchBg = searchFocused ? 0xFF2B2634 : hovered ? 0xFF292430 : 0xFF24202B;
             context.fill(searchLeft, searchTop(), searchRight, searchBottom(), searchBg);
-
             String visible = searchQuery.length() > 24 ? searchQuery.substring(0, 24) : searchQuery;
-            if (!visible.isEmpty()) {
-                context.drawText(textRenderer, Text.literal(visible), searchLeft + 11, top + 18, 0xFFD9D0DD, false);
-            } else {
-                context.drawText(textRenderer, Text.literal("Search"), searchLeft + 11, top + 18, 0xFF706775, false);
-            }
+            context.drawText(textRenderer, Text.literal(visible.isEmpty() ? "Search" : visible), searchLeft + 11, top + 18, visible.isEmpty() ? 0xFF706775 : 0xFFD9D0DD, false);
             context.drawText(textRenderer, Text.literal("/"), searchRight - 18, top + 18, 0xFF706775, false);
 
             if (searchFocused) {
@@ -160,27 +162,33 @@ public final class Zik9kClient implements ClientModInitializer {
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button != 0) {
-                return super.mouseClicked(mouseX, mouseY, button);
-            }
-
+            if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
             int left = panelLeft();
             int top = panelTop();
             int right = left + PANEL_WIDTH;
+            int bottom = top + PANEL_HEIGHT;
 
             if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
                 for (int i = 0; i < TABS.length; i++) {
                     int tabTop = top + 112 + i * 48;
                     if (mouseY >= tabTop - 8 && mouseY <= tabTop + 28) {
                         selectedTab = i;
+                        searchFocused = false;
                         return true;
                     }
                 }
+
+                int settingsTop = bottom - 47;
+                if (mouseY >= settingsTop - 6 && mouseY <= settingsTop + 24) {
+                    searchFocused = false;
+                    client.setScreen(new SettingsScreen());
+                    return true;
+                }
             }
 
-            // Clicking the avatar cycles to the next supplied image.
             if (mouseX >= left + 12 && mouseX <= left + 52 && mouseY >= top + 54 && mouseY <= top + 94) {
                 avatarIndex = (avatarIndex + 1) % AvatarTextures.count();
+                ClientConfig.setAvatarIndex(avatarIndex);
                 return true;
             }
 
@@ -216,9 +224,7 @@ public final class Zik9kClient implements ClientModInitializer {
                     return true;
                 }
                 if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
-                    if (!searchQuery.isEmpty()) {
-                        searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
-                    }
+                    if (!searchQuery.isEmpty()) searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
                     lastBlinkTime = System.currentTimeMillis();
                     cursorVisible = true;
                     return true;
@@ -238,8 +244,6 @@ public final class Zik9kClient implements ClientModInitializer {
         }
 
         @Override
-        public boolean shouldPause() {
-            return false;
-        }
+        public boolean shouldPause() { return false; }
     }
 }
