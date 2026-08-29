@@ -1,7 +1,9 @@
 package com.zik9k.client;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -77,53 +79,31 @@ public final class TriggerBotSettingsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x(), mouseY = click.y();
+        int button = click.button();
+        if (button != 0) return super.mouseClicked(click, doubled);
         int left = left(), top = top(), right = left + WIDTH;
 
-        if (inside(mouseX, mouseY, left + 167, top + 86, 58, 24)) {
-            module.setClickMode(!module.isClickMode());
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 417, top + 86, 58, 24)) {
-            module.setCritMode(!module.isCritMode());
-            return true;
-        }
-        if (inSlider(mouseX, mouseY)) {
-            draggingCps = true;
-            updateCps(mouseX);
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 167, top + 202, 58, 24)) {
-            module.setTargetMobs(!module.isTargetMobs());
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 417, top + 202, 58, 24)) {
-            module.setTargetAnimals(!module.isTargetAnimals());
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 167, top + 246, 58, 24)) {
-            module.setTargetPlayers(!module.isTargetPlayers());
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
+        if (inside(mouseX, mouseY, left + 167, top + 86, 58, 24)) { module.setClickMode(!module.isClickMode()); return true; }
+        if (inside(mouseX, mouseY, left + 417, top + 86, 58, 24)) { module.setCritMode(!module.isCritMode()); return true; }
+        if (inSlider(mouseX, mouseY)) { draggingCps = true; updateCps(mouseX); return true; }
+        if (inside(mouseX, mouseY, left + 167, top + 202, 58, 24)) { module.setTargetMobs(!module.isTargetMobs()); return true; }
+        if (inside(mouseX, mouseY, left + 417, top + 202, 58, 24)) { module.setTargetAnimals(!module.isTargetAnimals()); return true; }
+        if (inside(mouseX, mouseY, left + 167, top + 246, 58, 24)) { module.setTargetPlayers(!module.isTargetPlayers()); return true; }
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (button == 0 && draggingCps) {
-            updateCps(mouseX);
-            return true;
-        }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (click.button() == 0 && draggingCps) { updateCps(click.x()); return true; }
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            draggingCps = false;
-        }
-        return super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0) draggingCps = false;
+        return super.mouseReleased(click);
     }
 
     private static int sliderValue(double mouseX, int left, int right, int min, int max) {
@@ -136,12 +116,9 @@ public final class TriggerBotSettingsScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        return super.keyPressed(input);
     }
 
     @Override
