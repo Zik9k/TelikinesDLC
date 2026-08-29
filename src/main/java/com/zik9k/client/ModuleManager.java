@@ -21,6 +21,7 @@ public final class ModuleManager {
         register(new ESPModule());
         register(new BlockOverlayModule());
         register(new TracersModule());
+        register(new AppleFarmModule());
 
         for (Module module : MODULES) {
             if (ClientConfig.isModuleEnabled(module.getName())) module.setEnabled(true);
