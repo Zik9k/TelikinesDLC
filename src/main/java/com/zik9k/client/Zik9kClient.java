@@ -25,7 +25,7 @@ public final class Zik9kClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientConfig.load();
         ModuleManager.init();
-        ESPModule.registerRenderer();
+        ESPWorldRenderer.register();
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.zik9k.open_gui", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, "category.zik9k"));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
