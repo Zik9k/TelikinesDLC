@@ -3,6 +3,7 @@ package com.zik9k.client;
 import net.minecraft.client.MinecraftClient;
 
 public final class FullBrightModule extends Module {
+    private static final double FULL_GAMMA = 15.0D;
     private Double previousGamma;
 
     public FullBrightModule() {
@@ -14,7 +15,7 @@ public final class FullBrightModule extends Module {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.options != null) {
             previousGamma = client.options.getGamma().getValue();
-            client.options.getGamma().setValue(16.0D);
+            applyGamma(client);
         }
     }
 
@@ -22,8 +23,12 @@ public final class FullBrightModule extends Module {
     public void onTick() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.options != null) {
-            client.options.getGamma().setValue(16.0D);
+            applyGamma(client);
         }
+    }
+
+    private void applyGamma(MinecraftClient client) {
+        client.options.getGamma().setValue(FULL_GAMMA);
     }
 
     @Override
