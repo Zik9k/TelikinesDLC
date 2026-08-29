@@ -7,11 +7,16 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public final class ESPModule extends Module {
     private boolean players = true;
     private boolean mobs = true;
     private boolean animals = false;
     private int range = 64;
+    private final Map<UUID, Boolean> originalGlowing = new HashMap<>();
 
     public ESPModule() {
         super("ESP", "Highlights selected living entities through the vanilla outline renderer", ModuleCategory.RENDER);
@@ -26,10 +31,16 @@ public final class ESPModule extends Module {
 
         for (Entity entity : client.world.getEntities()) {
             if (!(entity instanceof LivingEntity living) || entity == player) continue;
-            if (!isSelected(living) || player.squaredDistanceTo(entity) > (double) range * range) {
-                continue;
+
+            boolean selected = isSelected(living)
+                    && player.squaredDistanceTo(entity) <= (double) range * range;
+
+            if (selected) {
+                originalGlowing.putIfAbsent(entity.getUuid(), living.isGlowing());
+                if (!living.isGlowing()) living.setGlowing(true);
+            } else if (originalGlowing.containsKey(entity.getUuid())) {
+                living.setGlowing(originalGlowing.remove(entity.getUuid()));
             }
-            living.setGlowing(true);
         }
     }
 
@@ -44,10 +55,12 @@ public final class ESPModule extends Module {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
         for (Entity entity : client.world.getEntities()) {
-            if (entity instanceof LivingEntity living && !(living instanceof ClientPlayerEntity)) {
-                living.setGlowing(false);
+            if (entity instanceof LivingEntity living) {
+                Boolean previous = originalGlowing.remove(entity.getUuid());
+                if (previous != null) living.setGlowing(previous);
             }
         }
+        originalGlowing.clear();
     }
 
     private void loadSettings() {
