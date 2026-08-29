@@ -1,7 +1,9 @@
 package com.zik9k.client;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -65,33 +67,34 @@ public final class BlockOverlaySettingsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x(), mouseY = click.y();
+        if (click.button() != 0) return super.mouseClicked(click, doubled);
         int top = top();
         if (inSlider(mouseX, mouseY, top + 86)) { draggingFill = true; module.setAlpha(sliderValue(mouseX, 10, 180)); return true; }
         if (inSlider(mouseX, mouseY, top + 154)) { draggingOutline = true; module.setOutlineAlpha(sliderValue(mouseX, 40, 255)); return true; }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (button == 0) {
-            if (draggingFill) { module.setAlpha(sliderValue(mouseX, 10, 180)); return true; }
-            if (draggingOutline) { module.setOutlineAlpha(sliderValue(mouseX, 40, 255)); return true; }
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (click.button() == 0) {
+            if (draggingFill) { module.setAlpha(sliderValue(click.x(), 10, 180)); return true; }
+            if (draggingOutline) { module.setOutlineAlpha(sliderValue(click.x(), 40, 255)); return true; }
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) { draggingFill = false; draggingOutline = false; }
-        return super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0) { draggingFill = false; draggingOutline = false; }
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        return super.keyPressed(input);
     }
 
     @Override
