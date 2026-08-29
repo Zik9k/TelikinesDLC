@@ -41,7 +41,7 @@ public final class Zik9kClient implements ClientModInitializer {
         private int selectedTab;
 
         private ClickGuiScreen() {
-            super(Text.literal("Zik9k Client"));
+            super(Text.literal("TelikinesDLC"));
         }
 
         @Override
@@ -50,7 +50,6 @@ public final class Zik9kClient implements ClientModInitializer {
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-            // Soft translucent overlay over the game, matching the reference presentation.
             context.fill(0, 0, width, height, 0x8A08060D);
 
             int left = (width - PANEL_WIDTH) / 2;
@@ -58,26 +57,21 @@ public final class Zik9kClient implements ClientModInitializer {
             int right = left + PANEL_WIDTH;
             int bottom = top + PANEL_HEIGHT;
 
-            // Drop shadow + main rounded-looking card made from layered rectangles.
             context.fill(left + 5, top + 7, right + 5, bottom + 7, 0x42000000);
             context.fill(left + 2, top, right - 2, bottom, 0xFF17131F);
             context.fill(left, top + 2, right, bottom - 2, 0xFF17131F);
 
-            // Sidebar.
             context.fill(left + 2, top + 2, left + SIDEBAR_WIDTH, bottom - 2, 0xFF17121E);
             context.fill(left + SIDEBAR_WIDTH, top + 46, right - 2, bottom - 2, 0xFF120F18);
 
-            // Brand area.
-            context.drawText(textRenderer, Text.literal("Z"), left + 20, top + 16, 0xFFB26BFF, false);
-            context.drawText(textRenderer, Text.literal("ZIK9K"), left + 40, top + 16, 0xFFF4EEF9, false);
+            context.drawText(textRenderer, Text.literal("T"), left + 20, top + 16, 0xFFB26BFF, false);
+            context.drawText(textRenderer, Text.literal("TELIKINESDLC"), left + 40, top + 16, 0xFFF4EEF9, false);
 
-            // Small profile block, inspired by the reference sidebar.
             context.fill(left + 16, top + 58, left + 48, top + 90, 0xFF3A3045);
-            context.drawText(textRenderer, Text.literal("Z"), left + 28, top + 68, 0xFFD5B8FF, false);
+            context.drawText(textRenderer, Text.literal("T"), left + 28, top + 68, 0xFFD5B8FF, false);
             context.drawText(textRenderer, Text.literal("Client"), left + 58, top + 62, 0xFFEFE8F3, false);
             context.drawText(textRenderer, Text.literal("Minecraft 1.21.11"), left + 58, top + 76, 0xFF817787, false);
 
-            // Tabs.
             for (int i = 0; i < TABS.length; i++) {
                 int tabTop = top + 112 + i * 48;
                 boolean selected = i == selectedTab;
@@ -94,27 +88,22 @@ public final class Zik9kClient implements ClientModInitializer {
                 context.drawText(textRenderer, Text.literal(TABS[i]), left + 49, tabTop + 3, textColor, false);
             }
 
-            // Content header / toolbar. No module cards yet — intentionally empty.
             int contentLeft = left + SIDEBAR_WIDTH + 1;
             context.fill(contentLeft, top + 2, right - 2, top + 46, 0xFF1A1622);
 
-            // Fake version selector.
             context.fill(contentLeft + 18, top + 13, contentLeft + 104, top + 33, 0xFF24202B);
             context.drawText(textRenderer, Text.literal("1.21.11"), contentLeft + 27, top + 18, 0xFFBBB2C2, false);
             context.drawText(textRenderer, Text.literal("v"), contentLeft + 88, top + 18, 0xFF766C7B, false);
 
-            // Search field.
             int searchRight = right - 20;
             int searchLeft = searchRight - 190;
             context.fill(searchLeft, top + 13, searchRight, top + 33, 0xFF24202B);
             context.drawText(textRenderer, Text.literal("Search"), searchLeft + 11, top + 18, 0xFF706775, false);
             context.drawText(textRenderer, Text.literal("/"), searchRight - 18, top + 18, 0xFF706775, false);
 
-            // Content title.
             context.drawText(textRenderer, Text.literal(TABS[selectedTab]), contentLeft + 24, top + 68, 0xFFF4EDF8, false);
             context.drawText(textRenderer, Text.literal("Empty"), contentLeft + 24, top + 88, 0xFF6F6673, false);
 
-            // Center empty-state marker.
             int cx = (contentLeft + right) / 2;
             int cy = (top + bottom) / 2 + 15;
             context.fill(cx - 28, cy - 28, cx + 28, cy + 28, 0xFF1B1720);
