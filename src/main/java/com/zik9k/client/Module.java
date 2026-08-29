@@ -17,6 +17,7 @@ public abstract class Module {
         this.enabled = enabled;
         if (enabled) onEnable();
         else onDisable();
+        ClientConfig.setModuleEnabled(name, enabled);
     }
 
     public final void toggle() {
