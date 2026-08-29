@@ -206,11 +206,17 @@ public final class AppleFarmModule extends Module {
     }
 
     private void selectHotbarSlot(ClientPlayerEntity player, int inventorySlot) {
-        if (inventorySlot >= 0 && inventorySlot < 9) { player.getInventory().selectedSlot = inventorySlot; return; }
+        if (inventorySlot >= 0 && inventorySlot < 9) {
+            player.getInventory().setSelectedSlot(inventorySlot);
+            return;
+        }
         if (inventorySlot >= 9) {
             ItemStack wanted = player.getInventory().getStack(inventorySlot);
             for (int i = 0; i < 9; i++) {
-                if (player.getInventory().getStack(i).isItemEqual(wanted)) { player.getInventory().selectedSlot = i; return; }
+                if (ItemStack.areItemsEqual(player.getInventory().getStack(i), wanted)) {
+                    player.getInventory().setSelectedSlot(i);
+                    return;
+                }
             }
         }
     }
