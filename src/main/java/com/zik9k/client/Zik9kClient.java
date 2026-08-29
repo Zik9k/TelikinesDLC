@@ -1,7 +1,7 @@
 package com.zik9k.client;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -27,6 +27,7 @@ public final class Zik9kClient implements ClientModInitializer {
         ESPWorldRenderer.register();
         BlockOverlayWorldRenderer.register();
         TracersWorldRenderer.register();
+        HudRenderer.register();
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.zik9k.open_gui", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, "category.zik9k"));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ModuleManager.tick(client);
