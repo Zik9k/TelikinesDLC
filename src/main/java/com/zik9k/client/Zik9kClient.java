@@ -25,6 +25,7 @@ public final class Zik9kClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientConfig.load();
         ModuleManager.init();
+        ESPModule.registerRenderer();
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.zik9k.open_gui", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_SHIFT, "category.zik9k"));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -156,7 +157,6 @@ public final class Zik9kClient implements ClientModInitializer {
 
         @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
             int left = panelLeft(), top = panelTop(), right = left + PANEL_WIDTH, bottom = top + PANEL_HEIGHT;
-
             if (button == 1) {
                 List<Module> modules = ModuleManager.getModules(ModuleCategory.values()[selectedTab]).stream().filter(this::matches).toList();
                 int cardY = top + 104;
@@ -165,23 +165,15 @@ public final class Zik9kClient implements ClientModInitializer {
                 for (Module module : modules) {
                     if (cardY > bottom - 28) break;
                     if (mouseX >= cardX && mouseX <= cardRight && mouseY >= cardY && mouseY <= cardY + 48) {
-                        if (module instanceof TriggerBotModule triggerBot) {
-                            client.setScreen(new TriggerBotSettingsScreen(triggerBot, this));
-                            return true;
-                        }
-                        if (module instanceof ESPModule esp) {
-                            client.setScreen(new ESPSettingsScreen(esp, this));
-                            return true;
-                        }
+                        if (module instanceof TriggerBotModule triggerBot) { client.setScreen(new TriggerBotSettingsScreen(triggerBot, this)); return true; }
+                        if (module instanceof ESPModule esp) { client.setScreen(new ESPSettingsScreen(esp, this)); return true; }
                         return true;
                     }
                     cardY += 58;
                 }
                 return super.mouseClicked(mouseX, mouseY, button);
             }
-
             if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
-
             if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
                 for (int i = 0; i < TABS.length; i++) {
                     int tabTop = top + 112 + i * 48;
@@ -207,12 +199,10 @@ public final class Zik9kClient implements ClientModInitializer {
             searchFocused = false;
             return super.mouseClicked(mouseX, mouseY, button);
         }
-
         @Override public boolean charTyped(char chr, int modifiers) {
             if (searchFocused && chr >= 32 && chr != 127 && searchQuery.length() < 48) { searchQuery += chr; lastBlinkTime = System.currentTimeMillis(); cursorVisible = true; return true; }
             return super.charTyped(chr, modifiers);
         }
-
         @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (searchFocused) {
                 if (keyCode == GLFW.GLFW_KEY_ESCAPE) { searchFocused = false; return true; }
@@ -222,7 +212,6 @@ public final class Zik9kClient implements ClientModInitializer {
             }
             return super.keyPressed(keyCode, scanCode, modifiers);
         }
-
         @Override public boolean shouldPause() { return false; }
     }
 }
