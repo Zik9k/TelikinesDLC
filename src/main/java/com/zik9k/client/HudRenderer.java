@@ -1,9 +1,12 @@
 package com.zik9k.client;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 
 import java.time.LocalTime;
@@ -12,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** TelikinesDLC HUD with active modules, keybinds, performance and player info. */
+@Environment(EnvType.CLIENT)
 public final class HudRenderer {
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -21,7 +25,7 @@ public final class HudRenderer {
         HudRenderCallback.EVENT.register(HudRenderer::render);
     }
 
-    private static void render(DrawContext context, float tickDelta) {
+    private static void render(DrawContext context, RenderTickCounter tickCounter) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.options.hudHidden) return;
 
@@ -51,9 +55,9 @@ public final class HudRenderer {
     private static void drawTlMark(DrawContext context, int x, int y, int accent) {
         context.fill(x, y, x + 28, y + 28, 0x7A100B18);
         context.fill(x, y, x + 2, y + 28, accent);
-        context.fill(x + 6, y + 4, x + 22, y + 7, accent);      // T top
-        context.fill(x + 12, y + 6, x + 16, y + 22, accent);     // T stem
-        context.fill(x + 8, y + 10, x + 12, y + 13, 0xFFF1EAF5); // rotated L cross stroke
+        context.fill(x + 6, y + 4, x + 22, y + 7, accent);
+        context.fill(x + 12, y + 6, x + 16, y + 22, accent);
+        context.fill(x + 8, y + 10, x + 12, y + 13, 0xFFF1EAF5);
         context.fill(x + 8, y + 13, x + 20, y + 16, 0xFFF1EAF5);
         context.fill(x + 8, y + 16, x + 11, y + 22, 0xFFF1EAF5);
     }
@@ -120,13 +124,11 @@ public final class HudRenderer {
     }
 
     private static void drawStaffList(DrawContext context, MinecraftClient client, int accent) {
-        // Generic staff panel: only shows players currently identified by the client
-        // as OP/admin entries; it never guesses based on usernames.
         if (client.getNetworkHandler() == null) return;
 
         List<PlayerListEntry> staff = client.getNetworkHandler().getPlayerList().stream()
                 .filter(entry -> entry.getGameMode() != null && !entry.getGameMode().isSurvivalLike())
-                .sorted(Comparator.comparing(PlayerListEntry::getProfileName))
+                .sorted(Comparator.comparing(entry -> entry.getProfile().getName()))
                 .toList();
         if (staff.isEmpty()) return;
 
@@ -140,7 +142,7 @@ public final class HudRenderer {
         int rowY = y + 22;
         for (PlayerListEntry entry : staff) {
             if (rowY > y + height - 10) break;
-            context.drawText(client.textRenderer, Text.literal(entry.getProfileName()), x + 8, rowY, 0xFFD8CFDD, false);
+            context.drawText(client.textRenderer, Text.literal(entry.getProfile().getName()), x + 8, rowY, 0xFFD8CFDD, false);
             context.drawText(client.textRenderer, Text.literal("listed"), x + width - 42, rowY, accent, false);
             rowY += 15;
         }
