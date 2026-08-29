@@ -3,17 +3,15 @@ package com.zik9k.client;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.VertexRendering;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.DrawStyle;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.debug.gizmo.GizmoDrawing;
 
-/** Draws a translucent filled and outlined box over the block under the crosshair. */
+/** Draws a translucent filled box over the block under the crosshair. */
 public final class BlockOverlayWorldRenderer {
     private BlockOverlayWorldRenderer() { }
 
@@ -34,32 +32,13 @@ public final class BlockOverlayWorldRenderer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null || !(client.crosshairTarget instanceof BlockHitResult hit)) return;
 
-        VertexConsumerProvider consumers = context.consumers();
-        if (consumers == null) return;
-
         BlockPos pos = hit.getBlockPos();
         Box box = new Box(pos).expand(0.002D);
         Vec3d camera = context.camera().getCameraPos();
+        double distanceSquared = camera.squaredDistanceTo(Vec3d.ofCenter(pos));
+        if (distanceSquared > 128.0D * 128.0D) return;
+
         float r = 0.70f, g = 0.35f, b = 0.95f;
-
-        context.matrices().push();
-        context.matrices().translate(-camera.x, -camera.y, -camera.z);
-
-        VertexConsumer fillConsumer = consumers.getBuffer(RenderLayer.getDebugFilledBox());
-        VertexRendering.drawFilledBox(
-                context.matrices(), fillConsumer,
-                box.minX, box.minY, box.minZ,
-                box.maxX, box.maxY, box.maxZ,
-                r, g, b, module.alpha() / 255.0f
-        );
-
-        VertexConsumer outlineConsumer = consumers.getBuffer(RenderLayer.getLines());
-        WorldRenderer.drawBox(
-                context.matrices(), outlineConsumer,
-                box.minX, box.minY, box.minZ,
-                box.maxX, box.maxY, box.maxZ,
-                r, g, b, module.outlineAlpha() / 255.0f
-        );
-        context.matrices().pop();
+        GizmoDrawing.box(box, DrawStyle.filled(ColorHelper.fromFloats(r, g, b, module.alpha() / 255.0f)));
     }
 }
