@@ -18,20 +18,14 @@ public final class SettingsScreen extends Screen {
     protected void init() {
     }
 
-    private int left() {
-        return (width - WIDTH) / 2;
-    }
-
-    private int top() {
-        return (height - HEIGHT) / 2;
-    }
+    private int left() { return (width - WIDTH) / 2; }
+    private int top() { return (height - HEIGHT) / 2; }
 
     private void toggleSetting(int id) {
         switch (id) {
             case 0 -> ClientConfig.setAnimations(!ClientConfig.animations());
             case 1 -> ClientConfig.setHoverEffects(!ClientConfig.hoverEffects());
-            default -> {
-            }
+            default -> { }
         }
     }
 
@@ -55,8 +49,8 @@ public final class SettingsScreen extends Screen {
         drawToggle(context, left + 22, top + 72, "Animations", ClientConfig.animations(), mouseX, mouseY);
         drawToggle(context, left + 22, top + 116, "Hover effects", ClientConfig.hoverEffects(), mouseX, mouseY);
 
-        drawSlider(context, left + 22, top + 174, "GUI scale", ClientConfig.guiScale(), 80, 125, "%%d%%");
-        drawSlider(context, left + 22, top + 228, "Overlay opacity", ClientConfig.overlayOpacity(), 20, 85, "%%d%%");
+        drawSlider(context, left + 22, top + 174, "GUI scale", ClientConfig.guiScale(), 80, 125, "%d%%");
+        drawSlider(context, left + 22, top + 228, "Overlay opacity", ClientConfig.overlayOpacity(), 20, 85, "%d%%");
 
         context.drawText(textRenderer, Text.literal("Accent"), left + 22, top + 278, 0xFFD8CFDD, false);
         String[] accents = {"Purple", "Violet", "Pink"};
@@ -69,7 +63,6 @@ public final class SettingsScreen extends Screen {
 
         context.fill(left + 22, bottom - 54, left + 124, bottom - 30, 0xFF2A202F);
         context.drawText(textRenderer, Text.literal("Reset"), left + 51, bottom - 48, 0xFFE2D8E6, false);
-
         context.drawText(textRenderer, Text.literal("ESC"), right - 67, bottom - 48, 0xFF6F6673, false);
         context.drawText(textRenderer, Text.literal("Back"), right - 37, bottom - 48, 0xFF8F8794, false);
 
@@ -93,8 +86,7 @@ public final class SettingsScreen extends Screen {
 
     private void drawSlider(DrawContext context, int x, int y, String label, int value, int min, int max, String format) {
         context.drawText(textRenderer, Text.literal(label), x, y + 4, 0xFFD8CFDD, false);
-        String shown = String.format(format, value);
-        context.drawText(textRenderer, Text.literal(shown), x + 410, y + 4, 0xFFAAA0AE, false);
+        context.drawText(textRenderer, Text.literal(String.format(format, value)), x + 410, y + 4, 0xFFAAA0AE, false);
         int barLeft = x + 175;
         int barRight = x + 390;
         int barY = y + 10;
@@ -106,31 +98,19 @@ public final class SettingsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) {
-            return super.mouseClicked(mouseX, mouseY, button);
-        }
-
+        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
         int left = left();
         int top = top();
         int bottom = top + HEIGHT;
 
-        if (inside(mouseX, mouseY, left + 427, top + 72, 50, 24)) {
-            toggleSetting(0);
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 427, top + 116, 50, 24)) {
-            toggleSetting(1);
-            return true;
-        }
-
+        if (inside(mouseX, mouseY, left + 427, top + 72, 50, 24)) { toggleSetting(0); return true; }
+        if (inside(mouseX, mouseY, left + 427, top + 116, 50, 24)) { toggleSetting(1); return true; }
         if (inside(mouseX, mouseY, left + 197, top + 164, 215, 24)) {
-            int value = sliderValue(mouseX, left + 197, left + 412, 80, 125);
-            ClientConfig.setGuiScale(value);
+            ClientConfig.setGuiScale(sliderValue(mouseX, left + 197, left + 412, 80, 125));
             return true;
         }
         if (inside(mouseX, mouseY, left + 197, top + 218, 215, 24)) {
-            int value = sliderValue(mouseX, left + 197, left + 412, 20, 85);
-            ClientConfig.setOverlayOpacity(value);
+            ClientConfig.setOverlayOpacity(sliderValue(mouseX, left + 197, left + 412, 20, 85));
             return true;
         }
 
@@ -152,7 +132,10 @@ public final class SettingsScreen extends Screen {
             }
             return true;
         }
-
+        if (inside(mouseX, mouseY, left + 280, bottom - 62, 240, 40)) {
+            close();
+            return true;
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -176,13 +159,9 @@ public final class SettingsScreen extends Screen {
 
     @Override
     public void close() {
-        if (client != null) {
-            client.setScreen(null);
-        }
+        if (client != null) client.setScreen(null);
     }
 
     @Override
-    public boolean shouldPause() {
-        return false;
-    }
+    public boolean shouldPause() { return false; }
 }
