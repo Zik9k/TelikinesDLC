@@ -4,7 +4,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
@@ -50,9 +49,8 @@ public final class TriggerBotModule extends Module {
 
     private boolean isSelectedTarget(LivingEntity target) {
         if (target instanceof PlayerEntity) return targetPlayers;
-        if (target instanceof HostileEntity) return targetMobs;
         if (target instanceof AnimalEntity) return targetAnimals;
-        return false;
+        return targetMobs;
     }
 
     private boolean canCrit(ClientPlayerEntity player) {
