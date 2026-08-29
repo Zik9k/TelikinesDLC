@@ -3,13 +3,18 @@ package com.zik9k.client;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
-/** Minimal TelikinesDLC HUD inspired by the supplied reference, without copying it. */
+/** TelikinesDLC HUD with active modules, keybinds, performance and player info. */
 public final class HudRenderer {
+    private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     private HudRenderer() { }
 
     public static void register() {
@@ -28,6 +33,18 @@ public final class HudRenderer {
 
         drawActiveModules(context, client, accent);
         drawKeybinds(context, client, accent);
+        drawInfoPanel(context, client, accent);
+        drawStaffList(context, client, accent);
+    }
+
+    private static void drawPanel(DrawContext context, int x, int y, int width, int height, int accent) {
+        context.fill(x + 3, y + 3, x + width + 3, y + height + 3, 0x38000000);
+        context.fill(x, y, x + width, y + height, 0x66090710);
+        context.fill(x, y, x + 2, y + height, accent);
+    }
+
+    private static void drawTitle(DrawContext context, MinecraftClient client, String title, int x, int y, int accent) {
+        context.drawText(client.textRenderer, Text.literal(title), x + 8, y + 6, 0xFFF1EAF5, true);
     }
 
     private static void drawActiveModules(DrawContext context, MinecraftClient client, int accent) {
@@ -38,37 +55,81 @@ public final class HudRenderer {
         if (active.isEmpty()) return;
 
         int right = client.getWindow().getScaledWidth() - 8;
+        int x = right - 164;
         int y = 8;
-        int rowHeight = 16;
-        int maxWidth = active.stream().mapToInt(m -> client.textRenderer.getWidth(m.getName())).max().orElse(0);
-        int panelLeft = right - maxWidth - 22;
-        int panelRight = right + 1;
-        int panelTop = y - 4;
-        int panelBottom = y + active.size() * rowHeight + 4;
+        int rowHeight = 15;
+        int panelHeight = 27 + active.size() * rowHeight;
 
-        context.fill(panelLeft, panelTop, panelRight, panelBottom, 0x5A09070E);
-        context.fill(panelRight - 2, panelTop, panelRight, panelBottom, accent);
-        context.drawText(client.textRenderer, Text.literal("TELIKINESDLC"), panelLeft + 8, y - 1, accent, true);
-        y += 14;
-
+        drawPanel(context, x, y, 164, panelHeight, accent);
+        drawTitle(context, client, "Active Modules", x, y, accent);
+        int rowY = y + 22;
         for (Module module : active) {
-            String name = module.getName();
-            int textWidth = client.textRenderer.getWidth(name);
-            int textX = right - textWidth;
-            context.drawText(client.textRenderer, Text.literal(name), textX, y, 0xFFF1EAF5, true);
-            y += rowHeight;
+            int textWidth = client.textRenderer.getWidth(module.getName());
+            context.drawText(client.textRenderer, Text.literal(module.getName()), right - textWidth - 12, rowY, 0xFFF1EAF5, false);
+            rowY += rowHeight;
         }
     }
 
     private static void drawKeybinds(DrawContext context, MinecraftClient client, int accent) {
         int x = 8;
         int y = 8;
-        int width = 138;
-        int height = 44;
-        context.fill(x, y, x + width, y + height, 0x5A09070E);
-        context.fill(x, y, x + 2, y + height, accent);
-        context.drawText(client.textRenderer, Text.literal("Keybinds"), x + 8, y + 7, 0xFFF1EAF5, true);
-        context.drawText(client.textRenderer, Text.literal("ClickGUI"), x + 8, y + 23, 0xFFB7ADBA, false);
-        context.drawText(client.textRenderer, Text.literal("RSHIFT"), x + width - 47, y + 23, accent, false);
+        int width = 148;
+        int height = 47;
+        drawPanel(context, x, y, width, height, accent);
+        drawTitle(context, client, "Keybinds", x, y, accent);
+        context.drawText(client.textRenderer, Text.literal("ClickGUI"), x + 8, y + 24, 0xFFB7ADBA, false);
+        context.drawText(client.textRenderer, Text.literal("RSHIFT"), x + width - 49, y + 24, accent, false);
+    }
+
+    private static void drawInfoPanel(DrawContext context, MinecraftClient client, int accent) {
+        int x = 8;
+        int y = client.getWindow().getScaledHeight() - 75;
+        int width = 206;
+        int height = 67;
+        drawPanel(context, x, y, width, height, accent);
+        drawTitle(context, client, "TelikinesDLC", x, y, accent);
+
+        int fps = client.getCurrentFps();
+        int ping = getPing(client);
+        String coords = String.format("XYZ %d %d %d", client.player.getBlockX(), client.player.getBlockY(), client.player.getBlockZ());
+        String clock = LocalTime.now().format(CLOCK);
+
+        context.drawText(client.textRenderer, Text.literal("FPS  " + fps), x + 8, y + 24, 0xFFD6CCD9, false);
+        context.drawText(client.textRenderer, Text.literal("Ping " + (ping >= 0 ? ping + " ms" : "--")), x + 84, y + 24, 0xFFD6CCD9, false);
+        context.drawText(client.textRenderer, Text.literal(coords), x + 8, y + 40, 0xFFAFA5B3, false);
+        context.drawText(client.textRenderer, Text.literal(clock), x + width - 56, y + 40, accent, false);
+    }
+
+    private static int getPing(MinecraftClient client) {
+        if (client.getNetworkHandler() == null || client.player == null) return -1;
+        PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(client.player.getUuid());
+        return entry == null ? -1 : entry.getLatency();
+    }
+
+    private static void drawStaffList(DrawContext context, MinecraftClient client, int accent) {
+        // Generic staff panel: only shows players currently identified by the client
+        // as OP/admin entries; it never guesses based on usernames.
+        if (client.getNetworkHandler() == null) return;
+
+        List<PlayerListEntry> staff = client.getNetworkHandler().getPlayerList().stream()
+                .filter(entry -> entry.getGameMode() != null && entry.getGameMode().isSurvivalLike() == false)
+                .sorted(Comparator.comparing(PlayerListEntry::getProfileName))
+                .toList();
+        if (staff.isEmpty()) return;
+
+        int x = 8;
+        int y = 62;
+        int width = 190;
+        int height = 30 + Math.min(staff.size(), 6) * 15;
+        drawPanel(context, x, y, width, height, accent);
+        drawTitle(context, client, "Staff List", x, y, accent);
+
+        int rowY = y + 22;
+        for (PlayerListEntry entry : staff) {
+            if (rowY > y + height - 10) break;
+            context.drawText(client.textRenderer, Text.literal(entry.getProfileName()), x + 8, rowY, 0xFFD8CFDD, false);
+            context.drawText(client.textRenderer, Text.literal("listed"), x + width - 42, rowY, accent, false);
+            rowY += 15;
+        }
     }
 }
