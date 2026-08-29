@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -29,18 +30,19 @@ public final class TracersWorldRenderer {
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null) return;
-        VertexConsumer consumers = context.consumers() == null ? null : context.consumers().getBuffer(RenderLayer.getLines());
+        VertexConsumer consumers = context.consumers() == null ? null : context.consumers().getBuffer(RenderLayers.lines());
         if (consumers == null) return;
 
         Vec3d cameraPos = context.camera().getCameraPos();
-        Vec3d start = client.player.getLerpedPos(context.tickCounter().getTickProgress(false)).add(0.0, client.player.getStandingEyeHeight() * 0.5, 0.0);
+        float tickProgress = context.tickCounter().getTickProgress(false);
+        Vec3d start = client.player.getLerpedPos(tickProgress).add(0.0, client.player.getStandingEyeHeight() * 0.5, 0.0);
         context.matrices().push();
         context.matrices().translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
         for (Entity entity : client.world.getEntities()) {
             if (!(entity instanceof LivingEntity living) || living == client.player) continue;
             if (!module.isSelected(living)) continue;
-            Vec3d pos = entity.getLerpedPos(context.tickCounter().getTickProgress(false)).add(0.0, living.getHeight() * 0.5, 0.0);
+            Vec3d pos = entity.getLerpedPos(tickProgress).add(0.0, living.getHeight() * 0.5, 0.0);
             if (cameraPos.squaredDistanceTo(pos) > (double) module.range() * module.range()) continue;
 
             float[] color = module.colorFor(living);
