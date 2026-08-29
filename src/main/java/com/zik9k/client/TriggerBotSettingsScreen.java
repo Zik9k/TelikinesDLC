@@ -9,10 +9,13 @@ public final class TriggerBotSettingsScreen extends Screen {
     private static final int WIDTH = 520;
     private static final int HEIGHT = 330;
     private final TriggerBotModule module;
+    private final Screen parent;
+    private boolean draggingCps;
 
-    public TriggerBotSettingsScreen(TriggerBotModule module) {
+    public TriggerBotSettingsScreen(TriggerBotModule module, Screen parent) {
         super(Text.literal("Trigger Bot Settings"));
         this.module = module;
+        this.parent = parent;
     }
 
     private int left() { return (width - WIDTH) / 2; }
@@ -49,7 +52,7 @@ public final class TriggerBotSettingsScreen extends Screen {
 
         context.drawText(textRenderer, Text.literal("RMB from ClickGUI opens these settings"), left + 22, bottom - 38, 0xFF655D69, false);
         context.drawText(textRenderer, Text.literal("ESC"), right - 62, bottom - 38, 0xFF8F8794, false);
-        context.drawText(textRenderer, Text.literal("Close"), right - 36, bottom - 38, 0xFF6F6673, false);
+        context.drawText(textRenderer, Text.literal("Back"), right - 36, bottom - 38, 0xFF6F6673, false);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -59,6 +62,18 @@ public final class TriggerBotSettingsScreen extends Screen {
         boolean hovered = mouseX >= boxLeft && mouseX <= boxRight && mouseY >= y && mouseY <= y + 24;
         context.fill(boxLeft, y, boxRight, y + 24, enabled ? 0xFF4D315F : hovered ? 0xFF2E2833 : 0xFF24202B);
         context.drawText(textRenderer, Text.literal(enabled ? "ON" : "OFF"), boxLeft + 18, y + 5, enabled ? 0xFFE9D6F4 : 0xFF827984, false);
+    }
+
+    private boolean inSlider(double mouseX, double mouseY) {
+        int left = left();
+        int top = top();
+        return mouseX >= left + 22 && mouseX <= left + WIDTH - 22 && mouseY >= top + 140 && mouseY <= top + 170;
+    }
+
+    private void updateCps(double mouseX) {
+        int left = left();
+        int right = left + WIDTH;
+        module.setClicksPerSecond(sliderValue(mouseX, left + 22, right - 22, 1, 20));
     }
 
     @Override
@@ -74,8 +89,9 @@ public final class TriggerBotSettingsScreen extends Screen {
             module.setCritMode(!module.isCritMode());
             return true;
         }
-        if (mouseY >= top + 140 && mouseY <= top + 170) {
-            module.setClicksPerSecond(sliderValue(mouseX, left + 22, right - 22, 1, 20));
+        if (inSlider(mouseX, mouseY)) {
+            draggingCps = true;
+            updateCps(mouseX);
             return true;
         }
         if (inside(mouseX, mouseY, left + 167, top + 202, 58, 24)) {
@@ -91,6 +107,23 @@ public final class TriggerBotSettingsScreen extends Screen {
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (button == 0 && draggingCps) {
+            updateCps(mouseX);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            draggingCps = false;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     private static int sliderValue(double mouseX, int left, int right, int min, int max) {
@@ -113,7 +146,7 @@ public final class TriggerBotSettingsScreen extends Screen {
 
     @Override
     public void close() {
-        if (client != null) client.setScreen(null);
+        if (client != null) client.setScreen(parent);
     }
 
     @Override
