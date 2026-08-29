@@ -18,10 +18,7 @@ import net.minecraft.util.math.Vec3d;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-/**
- * Automatic oak-tree farming state machine. The module will not start unless
- * bone meal, an axe, a hoe, and oak saplings are available.
- */
+/** Automatic oak-tree farming state machine. */
 public final class AppleFarmModule extends Module {
     private enum State { IDLE, HARVEST, CLEAR_LEAVES, COLLECT_SAPLING, RETURN_TO_CENTER, PLANT, GROW, WAIT_GROWTH }
 
@@ -36,19 +33,22 @@ public final class AppleFarmModule extends Module {
     }
 
     @Override
+    protected boolean canEnable() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        return player != null && hasRequiredItems(player);
+    }
+
+    @Override
     protected void onEnable() {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
-        if (player == null || client.world == null || !hasRequiredItems(player)) {
-            state = State.IDLE;
-            return;
-        }
+        if (player == null || client.world == null) return;
 
         farmCenter = player.getBlockPos();
         targetTreeBase = findOakBase(client, farmCenter);
         if (targetTreeBase == null) targetTreeBase = findPlantSpot(client, farmCenter);
         if (targetTreeBase == null) {
-            state = State.IDLE;
+            setEnabled(false);
             return;
         }
         state = client.world.getBlockState(targetTreeBase).isOf(Blocks.OAK_LOG) ? State.HARVEST : State.PLANT;
@@ -78,7 +78,7 @@ public final class AppleFarmModule extends Module {
             case HARVEST -> harvestTree(client, player);
             case CLEAR_LEAVES -> clearLeaves(client, player);
             case COLLECT_SAPLING -> collectSapling(client, player);
-            case RETURN_TO_CENTER -> moveTo(client, player, farmCenter, State.PLANT);
+            case RETURN_TO_CENTER -> moveTo(player, farmCenter, State.PLANT);
             case PLANT -> plant(client, player);
             case GROW -> grow(client, player);
             case WAIT_GROWTH -> awaitGrowth(client);
@@ -90,18 +90,11 @@ public final class AppleFarmModule extends Module {
     private void harvestTree(MinecraftClient client, ClientPlayerEntity player) {
         if (targetTreeBase == null) {
             targetTreeBase = findOakBase(client, farmCenter);
-            if (targetTreeBase == null) {
-                state = State.COLLECT_SAPLING;
-                return;
-            }
+            if (targetTreeBase == null) { state = State.COLLECT_SAPLING; return; }
         }
-
         BlockPos log = findNearestLog(client, targetTreeBase);
-        if (log == null) {
-            state = State.CLEAR_LEAVES;
-            return;
-        }
-        if (!moveTo(client, player, log, State.HARVEST)) return;
+        if (log == null) { state = State.CLEAR_LEAVES; return; }
+        if (!moveTo(player, log, State.HARVEST)) return;
         breakBlock(client, player, log, AxeItem.class);
     }
 
@@ -113,23 +106,15 @@ public final class AppleFarmModule extends Module {
                 for (int y = 0; y <= 7; y++) {
                     for (int z = -3; z <= 3; z++) {
                         BlockPos p = base.add(x, y, z);
-                        Block b = client.world.getBlockState(p).getBlock();
-                        if (b == Blocks.OAK_LEAVES) leafQueue.add(p);
+                        if (client.world.getBlockState(p).isOf(Blocks.OAK_LEAVES)) leafQueue.add(p);
                     }
                 }
             }
         }
-
         BlockPos leaf = leafQueue.peek();
-        if (leaf == null) {
-            state = State.COLLECT_SAPLING;
-            return;
-        }
-        if (!client.world.getBlockState(leaf).isOf(Blocks.OAK_LEAVES)) {
-            leafQueue.poll();
-            return;
-        }
-        if (!moveTo(client, player, leaf, State.CLEAR_LEAVES)) return;
+        if (leaf == null) { state = State.COLLECT_SAPLING; return; }
+        if (!client.world.getBlockState(leaf).isOf(Blocks.OAK_LEAVES)) { leafQueue.poll(); return; }
+        if (!moveTo(player, leaf, State.CLEAR_LEAVES)) return;
         breakBlock(client, player, leaf, HoeItem.class);
         if (client.world.getBlockState(leaf).isAir()) leafQueue.poll();
     }
@@ -140,46 +125,33 @@ public final class AppleFarmModule extends Module {
         for (ItemEntity item : client.world.getEntitiesByClass(ItemEntity.class,
                 player.getBoundingBox().expand(6.0D), entity -> entity.getStack().isOf(Items.OAK_SAPLING))) {
             double distance = player.squaredDistanceTo(item);
-            if (distance < best) {
-                best = distance;
-                closest = item;
-            }
+            if (distance < best) { best = distance; closest = item; }
         }
-        if (closest == null) {
-            state = State.RETURN_TO_CENTER;
-            return;
-        }
-        moveTo(client, player, closest.getBlockPos(), State.COLLECT_SAPLING);
+        if (closest == null) { state = State.RETURN_TO_CENTER; return; }
+        moveTo(player, closest.getBlockPos(), State.COLLECT_SAPLING);
     }
 
     private void plant(MinecraftClient client, ClientPlayerEntity player) {
-        if (farmCenter == null) { setEnabled(false); return; }
-        BlockPos spot = targetTreeBase != null ? targetTreeBase : farmCenter;
-        if (!client.world.getBlockState(spot).isAir()) {
-            BlockPos found = findPlantSpot(client, farmCenter);
-            if (found == null) { setEnabled(false); return; }
-            spot = found;
-            targetTreeBase = spot;
-        }
-        BlockPos soil = spot.down();
-        if (!moveTo(client, player, spot, State.PLANT)) return;
+        if (targetTreeBase == null) { setEnabled(false); return; }
+        BlockPos spot = targetTreeBase;
+        if (!client.world.getBlockState(spot).isAir()) { setEnabled(false); return; }
+        if (!moveTo(player, spot, State.PLANT)) return;
         int saplingSlot = findItemSlot(player, Items.OAK_SAPLING);
         if (saplingSlot < 0) { setEnabled(false); return; }
         selectHotbarSlot(player, saplingSlot);
         client.interactionManager.interactBlock(player, Hand.MAIN_HAND,
-                new BlockHitResult(Vec3d.ofCenter(spot), Direction.UP, soil, false));
+                new BlockHitResult(Vec3d.ofCenter(spot), Direction.UP, spot.down(), false));
         state = client.world.getBlockState(spot).isOf(Blocks.OAK_SAPLING) ? State.GROW : State.PLANT;
     }
 
     private void grow(MinecraftClient client, ClientPlayerEntity player) {
-        BlockPos spot = targetTreeBase;
-        if (spot == null) { setEnabled(false); return; }
-        if (!moveTo(client, player, spot, State.GROW)) return;
+        if (targetTreeBase == null) { setEnabled(false); return; }
+        if (!moveTo(player, targetTreeBase, State.GROW)) return;
         int boneSlot = findItemSlot(player, Items.BONE_MEAL);
         if (boneSlot < 0) { setEnabled(false); return; }
         selectHotbarSlot(player, boneSlot);
         client.interactionManager.interactBlock(player, Hand.MAIN_HAND,
-                new BlockHitResult(Vec3d.ofCenter(spot), Direction.UP, spot, false));
+                new BlockHitResult(Vec3d.ofCenter(targetTreeBase), Direction.UP, targetTreeBase, false));
         state = State.WAIT_GROWTH;
     }
 
@@ -200,14 +172,11 @@ public final class AppleFarmModule extends Module {
         player.swingHand(Hand.MAIN_HAND);
     }
 
-    private boolean moveTo(MinecraftClient client, ClientPlayerEntity player, BlockPos target, State nextState) {
+    private boolean moveTo(ClientPlayerEntity player, BlockPos target, State nextState) {
         if (target == null) { setEnabled(false); return false; }
         Vec3d destination = Vec3d.ofCenter(target);
         Vec3d delta = destination.subtract(player.getPos());
-        if (delta.horizontalLengthSquared() < 4.0D && Math.abs(delta.y) < 2.5D) {
-            state = nextState;
-            return true;
-        }
+        if (delta.horizontalLengthSquared() < 4.0D && Math.abs(delta.y) < 2.5D) { state = nextState; return true; }
         Vec3d horizontal = new Vec3d(delta.x, 0.0D, delta.z);
         if (horizontal.lengthSquared() > 0.01D) horizontal = horizontal.normalize().multiply(0.16D);
         player.setVelocity(horizontal.x, player.getVelocity().y, horizontal.z);
@@ -237,39 +206,26 @@ public final class AppleFarmModule extends Module {
     }
 
     private void selectHotbarSlot(ClientPlayerEntity player, int inventorySlot) {
-        if (inventorySlot >= 0 && inventorySlot < 9) {
-            player.getInventory().selectedSlot = inventorySlot;
-            return;
-        }
+        if (inventorySlot >= 0 && inventorySlot < 9) { player.getInventory().selectedSlot = inventorySlot; return; }
         if (inventorySlot >= 9) {
             ItemStack wanted = player.getInventory().getStack(inventorySlot);
             for (int i = 0; i < 9; i++) {
-                if (player.getInventory().getStack(i).isItemEqual(wanted)) {
-                    player.getInventory().selectedSlot = i;
-                    return;
-                }
+                if (player.getInventory().getStack(i).isItemEqual(wanted)) { player.getInventory().selectedSlot = i; return; }
             }
         }
     }
 
     private BlockPos findOakBase(MinecraftClient client, BlockPos center) {
         if (center == null || client.world == null) return null;
-        for (int r = 0; r <= 4; r++) {
-            for (int y = 0; y <= 3; y++) {
-                for (int x = -r; x <= r; x++) {
-                    for (int z = -r; z <= r; z++) {
-                        BlockPos p = center.add(x, y, z);
-                        if (client.world.getBlockState(p).isOf(Blocks.OAK_LOG)) return p;
-                    }
-                }
-            }
+        for (int r = 0; r <= 4; r++) for (int y = 0; y <= 3; y++) for (int x = -r; x <= r; x++) for (int z = -r; z <= r; z++) {
+            BlockPos p = center.add(x, y, z);
+            if (client.world.getBlockState(p).isOf(Blocks.OAK_LOG)) return p;
         }
         return null;
     }
 
     private BlockPos findNearestLog(MinecraftClient client, BlockPos base) {
-        BlockPos best = null;
-        double bestDist = Double.MAX_VALUE;
+        BlockPos best = null; double bestDist = Double.MAX_VALUE;
         for (int x = -2; x <= 2; x++) for (int y = 0; y <= 8; y++) for (int z = -2; z <= 2; z++) {
             BlockPos p = base.add(x, y, z);
             if (!client.world.getBlockState(p).isOf(Blocks.OAK_LOG)) continue;
@@ -280,12 +236,11 @@ public final class AppleFarmModule extends Module {
     }
 
     private BlockPos findPlantSpot(MinecraftClient client, BlockPos center) {
+        if (center == null || client.world == null) return null;
         for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) {
-            BlockPos p = center.add(x, 0, z);
-            BlockPos soil = p.down();
+            BlockPos p = center.add(x, 0, z), soil = p.down();
             if (client.world.getBlockState(p).isAir()
-                    && (client.world.getBlockState(soil).isOf(Blocks.DIRT)
-                    || client.world.getBlockState(soil).isOf(Blocks.GRASS_BLOCK))) return p;
+                    && (client.world.getBlockState(soil).isOf(Blocks.DIRT) || client.world.getBlockState(soil).isOf(Blocks.GRASS_BLOCK))) return p;
         }
         return null;
     }
