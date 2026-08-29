@@ -4,11 +4,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.debug.gizmo.GizmoDrawing;
 import org.joml.Vector3fc;
 
 /** Camera-facing rotating bracket target marker for aim and Kill Aura targets. */
@@ -24,7 +24,7 @@ public final class TargetEspWorldRenderer {
 
     private static void render(WorldRenderContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || context.consumers() == null) return;
+        if (client.world == null || client.player == null) return;
 
         LivingEntity target = null;
         for (Module module : ModuleManager.getModules()) {
@@ -42,8 +42,7 @@ public final class TargetEspWorldRenderer {
 
         float partial = client.getRenderTickCounter().getTickProgress(false);
         Vec3d center = target.getLerpedPos(partial).add(0.0D, target.getHeight() * 0.58D, 0.0D);
-        Camera cameraObject = client.gameRenderer.getCamera();
-        Vec3d camera = cameraObject.getCameraPos();
+        Camera camera = client.gameRenderer.getCamera();
 
         float cooldown = client.player.getAttackCooldownProgress(partial);
         if (cooldown < previousCooldown - 0.20F) {
@@ -60,9 +59,10 @@ public final class TargetEspWorldRenderer {
         float r = hitFlash ? 1.0F : ((accent >> 16) & 0xFF) / 255.0F;
         float g = hitFlash ? 0.10F : ((accent >> 8) & 0xFF) / 255.0F;
         float b = hitFlash ? 0.10F : (accent & 0xFF) / 255.0F;
+        int packedColor = ColorHelper.fromFloats(r, g, b, 0.96F);
 
-        Vector3fc horizontal = cameraObject.getHorizontalPlane();
-        Vector3fc vertical = cameraObject.getVerticalPlane();
+        Vector3fc horizontal = camera.getHorizontalPlane();
+        Vector3fc vertical = camera.getVerticalPlane();
         Vec3d right = new Vec3d(horizontal.x(), horizontal.y(), horizontal.z());
         Vec3d up = new Vec3d(vertical.x(), vertical.y(), vertical.z());
 
@@ -73,34 +73,18 @@ public final class TargetEspWorldRenderer {
         Vec3d u = right.multiply(Math.cos(angle)).add(up.multiply(Math.sin(angle)));
         Vec3d v = up.multiply(Math.cos(angle)).subtract(right.multiply(Math.sin(angle)));
 
-        context.matrices().push();
-        context.matrices().translate(-camera.x, -camera.y, -camera.z);
-        VertexConsumer consumer = context.consumers().getBuffer(RenderLayers.lines());
-
-        drawCorner(context, consumer, center, u, v, size, segment, 1, 1, r, g, b);
-        drawCorner(context, consumer, center, u, v, size, segment, -1, 1, r, g, b);
-        drawCorner(context, consumer, center, u, v, size, segment, 1, -1, r, g, b);
-        drawCorner(context, consumer, center, u, v, size, segment, -1, -1, r, g, b);
-
-        context.matrices().pop();
+        drawCorner(center, u, v, size, segment, 1, 1, packedColor);
+        drawCorner(center, u, v, size, segment, -1, 1, packedColor);
+        drawCorner(center, u, v, size, segment, 1, -1, packedColor);
+        drawCorner(center, u, v, size, segment, -1, -1, packedColor);
     }
 
-    private static void drawCorner(WorldRenderContext context, VertexConsumer consumer, Vec3d center,
-                                   Vec3d u, Vec3d v, double size, double segment,
-                                   double sx, double sy, float r, float g, float b) {
+    private static void drawCorner(Vec3d center, Vec3d u, Vec3d v, double size, double segment,
+                                   double sx, double sy, int color) {
         Vec3d corner = center.add(u.multiply(sx * size)).add(v.multiply(sy * size));
         Vec3d alongU = corner.add(u.multiply(-sx * segment));
         Vec3d alongV = corner.add(v.multiply(-sy * segment));
-        line(context, consumer, corner, alongU, r, g, b, 0.96F);
-        line(context, consumer, corner, alongV, r, g, b, 0.96F);
-    }
-
-    private static void line(WorldRenderContext context, VertexConsumer consumer, Vec3d from, Vec3d to,
-                             float r, float g, float b, float a) {
-        Vec3d normal = MinecraftClient.getInstance().gameRenderer.getCamera().getCameraPos().subtract(from).normalize();
-        consumer.vertex(context.matrices().peek(), (float) from.x, (float) from.y, (float) from.z)
-                .color(r, g, b, a).normal((float) normal.x, (float) normal.y, (float) normal.z);
-        consumer.vertex(context.matrices().peek(), (float) to.x, (float) to.y, (float) to.z)
-                .color(r, g, b, a).normal((float) normal.x, (float) normal.y, (float) normal.z);
+        GizmoDrawing.line(corner, alongU, color, 2.0F);
+        GizmoDrawing.line(corner, alongV, color, 2.0F);
     }
 }
