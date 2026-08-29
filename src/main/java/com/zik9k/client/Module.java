@@ -14,6 +14,7 @@ public abstract class Module {
 
     public final void setEnabled(boolean enabled) {
         if (this.enabled == enabled) return;
+        if (enabled && !canEnable()) return;
         this.enabled = enabled;
         if (enabled) onEnable();
         else onDisable();
@@ -25,6 +26,10 @@ public abstract class Module {
     }
 
     public void onTick() {
+    }
+
+    protected boolean canEnable() {
+        return true;
     }
 
     protected void onEnable() {
