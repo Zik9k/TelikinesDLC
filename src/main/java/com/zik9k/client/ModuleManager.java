@@ -18,6 +18,13 @@ public final class ModuleManager {
         initialized = true;
         register(new AutoSprintModule());
         register(new FullBrightModule());
+
+        // Restore the user's module states after registration.
+        for (Module module : MODULES) {
+            if (ClientConfig.isModuleEnabled(module.getName())) {
+                module.setEnabled(true);
+            }
+        }
     }
 
     private static void register(Module module) {
