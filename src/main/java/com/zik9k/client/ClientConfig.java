@@ -28,6 +28,11 @@ public final class ClientConfig {
     private static boolean triggerPlayers = true;
     private static int triggerCps = 8;
 
+    private static boolean espPlayers = true;
+    private static boolean espMobs = true;
+    private static boolean espAnimals;
+    private static int espRange = 64;
+
     private ClientConfig() { }
 
     public static void load() {
@@ -55,6 +60,11 @@ public final class ClientConfig {
             triggerAnimals = Boolean.parseBoolean(properties.getProperty("triggerAnimals", "false"));
             triggerPlayers = Boolean.parseBoolean(properties.getProperty("triggerPlayers", "true"));
             triggerCps = clampInt(parseInt(properties.getProperty("triggerCps"), 8), 1, 20);
+
+            espPlayers = Boolean.parseBoolean(properties.getProperty("espPlayers", "true"));
+            espMobs = Boolean.parseBoolean(properties.getProperty("espMobs", "true"));
+            espAnimals = Boolean.parseBoolean(properties.getProperty("espAnimals", "false"));
+            espRange = clampInt(parseInt(properties.getProperty("espRange"), 64), 8, 128);
         } catch (IOException ignored) { reset(); }
     }
 
@@ -75,6 +85,10 @@ public final class ClientConfig {
             properties.setProperty("triggerAnimals", Boolean.toString(triggerAnimals));
             properties.setProperty("triggerPlayers", Boolean.toString(triggerPlayers));
             properties.setProperty("triggerCps", Integer.toString(triggerCps));
+            properties.setProperty("espPlayers", Boolean.toString(espPlayers));
+            properties.setProperty("espMobs", Boolean.toString(espMobs));
+            properties.setProperty("espAnimals", Boolean.toString(espAnimals));
+            properties.setProperty("espRange", Integer.toString(espRange));
             try (OutputStream output = Files.newOutputStream(FILE)) { properties.store(output, "TelikinesDLC client configuration"); }
         } catch (IOException ignored) { }
     }
@@ -83,6 +97,7 @@ public final class ClientConfig {
         animations = true; hoverEffects = true; guiScale = 100; overlayOpacity = 54; accent = 0; avatarIndex = 0;
         enabledModules.clear();
         triggerClickMode = true; triggerCritMode = false; triggerMobs = true; triggerAnimals = false; triggerPlayers = true; triggerCps = 8;
+        espPlayers = true; espMobs = true; espAnimals = false; espRange = 64;
         save();
     }
 
@@ -116,4 +131,13 @@ public final class ClientConfig {
     public static void setTriggerAnimals(boolean value) { triggerAnimals = value; save(); }
     public static void setTriggerPlayers(boolean value) { triggerPlayers = value; save(); }
     public static void setTriggerCps(int value) { triggerCps = clampInt(value, 1, 20); save(); }
+
+    public static boolean espPlayers() { return espPlayers; }
+    public static void setEspPlayers(boolean value) { espPlayers = value; save(); }
+    public static boolean espMobs() { return espMobs; }
+    public static void setEspMobs(boolean value) { espMobs = value; save(); }
+    public static boolean espAnimals() { return espAnimals; }
+    public static void setEspAnimals(boolean value) { espAnimals = value; save(); }
+    public static int espRange() { return espRange; }
+    public static void setEspRange(int value) { espRange = clampInt(value, 8, 128); save(); }
 }
