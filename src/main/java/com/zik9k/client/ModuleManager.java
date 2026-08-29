@@ -10,16 +10,15 @@ public final class ModuleManager {
     private static final List<Module> MODULES = new ArrayList<>();
     private static boolean initialized;
 
-    private ModuleManager() {
-    }
+    private ModuleManager() { }
 
     public static void init() {
         if (initialized) return;
         initialized = true;
         register(new AutoSprintModule());
         register(new FullBrightModule());
+        register(new TriggerBotModule());
 
-        // Restore the user's module states after registration.
         for (Module module : MODULES) {
             if (ClientConfig.isModuleEnabled(module.getName())) {
                 module.setEnabled(true);
@@ -27,16 +26,12 @@ public final class ModuleManager {
         }
     }
 
-    private static void register(Module module) {
-        MODULES.add(module);
-    }
+    private static void register(Module module) { MODULES.add(module); }
 
     public static void tick(MinecraftClient client) {
         init();
         for (Module module : MODULES) {
-            if (module.isEnabled()) {
-                module.onTick();
-            }
+            if (module.isEnabled()) module.onTick();
         }
     }
 
