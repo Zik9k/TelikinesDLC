@@ -1,18 +1,18 @@
 package com.zik9k.client;
 
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexRendering;
-import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
-/** Renders the ESP as a translucent filled entity hitbox without the vanilla direction arrow. */
+/** Draws ESP as translucent filled entity hitboxes, with no direction arrow. */
 public final class ESPWorldRenderer {
     private ESPWorldRenderer() {
     }
@@ -21,8 +21,14 @@ public final class ESPWorldRenderer {
         WorldRenderEvents.AFTER_ENTITIES.register(ESPWorldRenderer::render);
     }
 
-    private static void render(net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext context) {
-        ESPModule esp = getESP();
+    private static void render(WorldRenderContext context) {
+        ESPModule esp = null;
+        for (Module module : ModuleManager.getModules()) {
+            if (module instanceof ESPModule candidate) {
+                esp = candidate;
+                break;
+            }
+        }
         if (esp == null || !esp.isEnabled()) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
@@ -31,9 +37,7 @@ public final class ESPWorldRenderer {
         VertexConsumerProvider consumers = context.consumers();
         if (consumers == null) return;
 
-        Camera camera = client.gameRenderer.getCamera();
-        Vec3d cameraPos = camera.getCameraPos();
-        float tickProgress = context.tickCounter().getTickProgress(false);
+        Vec3d cameraPos = context.camera().getCameraPos();
         VertexConsumer consumer = consumers.getBuffer(RenderLayer.getDebugFilledBox());
 
         context.matrices().push();
@@ -42,37 +46,18 @@ public final class ESPWorldRenderer {
         for (Entity entity : client.world.getEntities()) {
             if (!(entity instanceof LivingEntity living) || living == client.player) continue;
             if (!esp.isSelected(living)) continue;
+            if (cameraPos.squaredDistanceTo(entity.getX(), entity.getY(), entity.getZ()) > (double) esp.range() * esp.range()) continue;
 
-            Vec3d pos = entity.getLerpedPos(tickProgress);
-            Box box = entity.getBoundingBox();
-            double dx = pos.x - entity.getX();
-            double dy = pos.y - entity.getY();
-            double dz = pos.z - entity.getZ();
-            Box renderBox = box.offset(dx, dy, dz).expand(0.02D);
-
-            if (cameraPos.squaredDistanceTo(pos) > (double) esp.range() * esp.range()) continue;
-
+            Box box = entity.getBoundingBox().expand(0.015D);
             float[] color = esp.colorFor(living);
             VertexRendering.drawFilledBox(
-                    context.matrices(),
-                    consumer,
-                    renderBox.minX,
-                    renderBox.minY,
-                    renderBox.minZ,
-                    renderBox.maxX,
-                    renderBox.maxY,
-                    renderBox.maxZ,
+                    context.matrices(), consumer,
+                    box.minX, box.minY, box.minZ,
+                    box.maxX, box.maxY, box.maxZ,
                     color[0], color[1], color[2], color[3]
             );
         }
 
         context.matrices().pop();
-    }
-
-    private static ESPModule getESP() {
-        for (Module module : ModuleManager.getModules()) {
-            if (module instanceof ESPModule esp) return esp;
-        }
-        return null;
     }
 }
