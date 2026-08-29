@@ -5,7 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Properties;
+import java.util.Set;
 
 public final class ClientConfig {
     private static final Path FILE = Path.of("config", "telikinesdlc.properties");
@@ -16,6 +19,7 @@ public final class ClientConfig {
     private static int overlayOpacity = 54;
     private static int accent = 0;
     private static int avatarIndex = 0;
+    private static final Set<String> enabledModules = new LinkedHashSet<>();
 
     private ClientConfig() {
     }
@@ -38,6 +42,15 @@ public final class ClientConfig {
             overlayOpacity = clampInt(parseInt(properties.getProperty("overlayOpacity"), 54), 20, 85);
             accent = clampInt(parseInt(properties.getProperty("accent"), 0), 0, 2);
             avatarIndex = clampInt(parseInt(properties.getProperty("avatarIndex"), 0), 0, 3);
+
+            enabledModules.clear();
+            String storedModules = properties.getProperty("enabledModules", "");
+            if (!storedModules.isBlank()) {
+                Arrays.stream(storedModules.split(","))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .forEach(enabledModules::add);
+            }
         } catch (IOException ignored) {
             reset();
         }
@@ -53,6 +66,7 @@ public final class ClientConfig {
             properties.setProperty("overlayOpacity", Integer.toString(overlayOpacity));
             properties.setProperty("accent", Integer.toString(accent));
             properties.setProperty("avatarIndex", Integer.toString(avatarIndex));
+            properties.setProperty("enabledModules", String.join(",", enabledModules));
             try (OutputStream output = Files.newOutputStream(FILE)) {
                 properties.store(output, "TelikinesDLC client configuration");
             }
@@ -67,6 +81,7 @@ public final class ClientConfig {
         overlayOpacity = 54;
         accent = 0;
         avatarIndex = 0;
+        enabledModules.clear();
         save();
     }
 
@@ -94,4 +109,14 @@ public final class ClientConfig {
     public static void setAccent(int value) { accent = clampInt(value, 0, 2); save(); }
     public static int avatarIndex() { return avatarIndex; }
     public static void setAvatarIndex(int value) { avatarIndex = clampInt(value, 0, 3); save(); }
+
+    public static boolean isModuleEnabled(String moduleName) {
+        return enabledModules.contains(moduleName);
+    }
+
+    public static void setModuleEnabled(String moduleName, boolean enabled) {
+        if (enabled) enabledModules.add(moduleName);
+        else enabledModules.remove(moduleName);
+        save();
+    }
 }
