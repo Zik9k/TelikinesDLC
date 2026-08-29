@@ -3,7 +3,6 @@ package com.zik9k.client;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.entity.Entity;
@@ -33,8 +32,8 @@ public final class TracersWorldRenderer {
         VertexConsumer consumers = context.consumers() == null ? null : context.consumers().getBuffer(RenderLayers.lines());
         if (consumers == null) return;
 
-        Vec3d cameraPos = context.camera().getCameraPos();
-        float tickProgress = context.tickCounter().getTickProgress(false);
+        Vec3d cameraPos = client.gameRenderer.getCamera().getCameraPos();
+        float tickProgress = client.getRenderTickCounter().getTickProgress(false);
         Vec3d start = client.player.getLerpedPos(tickProgress).add(0.0, client.player.getStandingEyeHeight() * 0.5, 0.0);
         context.matrices().push();
         context.matrices().translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
