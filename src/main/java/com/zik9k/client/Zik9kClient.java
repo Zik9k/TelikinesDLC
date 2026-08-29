@@ -11,10 +11,11 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public final class Zik9kClient implements ClientModInitializer {
-    private static final int PANEL_WIDTH = 620;
-    private static final int PANEL_HEIGHT = 360;
-    private static final int SIDEBAR_WIDTH = 150;
-    private static final String[] TABS = {"Combat", "Movement", "Render", "Player", "Misc"};
+    private static final int PANEL_WIDTH = 680;
+    private static final int PANEL_HEIGHT = 400;
+    private static final int SIDEBAR_WIDTH = 168;
+    private static final String[] TABS = {"Combat", "Render", "Movement", "Player", "Misc"};
+    private static final String[] TAB_MARKS = {"+", "o", ">", "*", "#"};
 
     private static KeyBinding openGuiKey;
 
@@ -49,59 +50,75 @@ public final class Zik9kClient implements ClientModInitializer {
 
         @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-            context.fill(0, 0, width, height, 0x99000000);
+            // Soft translucent overlay over the game, matching the reference presentation.
+            context.fill(0, 0, width, height, 0x8A08060D);
 
             int left = (width - PANEL_WIDTH) / 2;
             int top = (height - PANEL_HEIGHT) / 2;
             int right = left + PANEL_WIDTH;
             int bottom = top + PANEL_HEIGHT;
 
-            // Main window.
-            context.fill(left + 3, top + 3, right + 3, bottom + 3, 0x55000000);
-            context.fill(left, top, right, bottom, 0xFF111111);
-
-            // Header.
-            context.fill(left, top, right, top + 48, 0xFF191919);
-            context.drawText(textRenderer, title, left + 18, top + 16, 0xFFFFFFFF, false);
+            // Drop shadow + main rounded-looking card made from layered rectangles.
+            context.fill(left + 5, top + 7, right + 5, bottom + 7, 0x42000000);
+            context.fill(left + 2, top, right - 2, bottom, 0xFF17131F);
+            context.fill(left, top + 2, right, bottom - 2, 0xFF17131F);
 
             // Sidebar.
-            context.fill(left, top + 48, left + SIDEBAR_WIDTH, bottom, 0xFF151515);
+            context.fill(left + 2, top + 2, left + SIDEBAR_WIDTH, bottom - 2, 0xFF17121E);
+            context.fill(left + SIDEBAR_WIDTH, top + 46, right - 2, bottom - 2, 0xFF120F18);
 
+            // Brand area.
+            context.drawText(textRenderer, Text.literal("Z"), left + 20, top + 16, 0xFFB26BFF, false);
+            context.drawText(textRenderer, Text.literal("ZIK9K"), left + 40, top + 16, 0xFFF4EEF9, false);
+
+            // Small profile block, inspired by the reference sidebar.
+            context.fill(left + 16, top + 58, left + 48, top + 90, 0xFF3A3045);
+            context.drawText(textRenderer, Text.literal("Z"), left + 28, top + 68, 0xFFD5B8FF, false);
+            context.drawText(textRenderer, Text.literal("Client"), left + 58, top + 62, 0xFFEFE8F3, false);
+            context.drawText(textRenderer, Text.literal("Minecraft 1.21.11"), left + 58, top + 76, 0xFF817787, false);
+
+            // Tabs.
             for (int i = 0; i < TABS.length; i++) {
-                int tabTop = top + 64 + i * 50;
+                int tabTop = top + 112 + i * 48;
                 boolean selected = i == selectedTab;
+
                 if (selected) {
-                    context.fill(left + 10, tabTop - 6, left + SIDEBAR_WIDTH - 10, tabTop + 30, 0xFF2A2A2A);
+                    context.fill(left + 10, tabTop - 8, left + SIDEBAR_WIDTH - 10, tabTop + 28, 0xFF2C2038);
+                    context.fill(left + 10, tabTop - 8, left + 13, tabTop + 28, 0xFFB15CFF);
                 }
 
-                context.drawText(
-                        textRenderer,
-                        Text.literal(TABS[i]),
-                        left + 24,
-                        tabTop + 5,
-                        selected ? 0xFFFFFFFF : 0xFF888888,
-                        false
-                );
+                int markColor = selected ? 0xFFB96CFF : 0xFF776D7D;
+                int textColor = selected ? 0xFFF7F1FA : 0xFF8F8794;
+
+                context.drawText(textRenderer, Text.literal(TAB_MARKS[i]), left + 25, tabTop + 3, markColor, false);
+                context.drawText(textRenderer, Text.literal(TABS[i]), left + 49, tabTop + 3, textColor, false);
             }
 
-            // Empty content area.
-            int contentLeft = left + SIDEBAR_WIDTH;
-            context.fill(contentLeft + 1, top + 48, right, bottom, 0xFF101010);
-            context.drawText(
-                    textRenderer,
-                    Text.literal(TABS[selectedTab]),
-                    contentLeft + 22,
-                    top + 68,
-                    0xFFFFFFFF,
-                    false
-            );
-            context.drawCenteredTextWithShadow(
-                    textRenderer,
-                    Text.literal("Empty"),
-                    (contentLeft + right) / 2,
-                    (top + bottom) / 2 - 4,
-                    0xFF666666
-            );
+            // Content header / toolbar. No module cards yet — intentionally empty.
+            int contentLeft = left + SIDEBAR_WIDTH + 1;
+            context.fill(contentLeft, top + 2, right - 2, top + 46, 0xFF1A1622);
+
+            // Fake version selector.
+            context.fill(contentLeft + 18, top + 13, contentLeft + 104, top + 33, 0xFF24202B);
+            context.drawText(textRenderer, Text.literal("1.21.11"), contentLeft + 27, top + 18, 0xFFBBB2C2, false);
+            context.drawText(textRenderer, Text.literal("v"), contentLeft + 88, top + 18, 0xFF766C7B, false);
+
+            // Search field.
+            int searchRight = right - 20;
+            int searchLeft = searchRight - 190;
+            context.fill(searchLeft, top + 13, searchRight, top + 33, 0xFF24202B);
+            context.drawText(textRenderer, Text.literal("Search"), searchLeft + 11, top + 18, 0xFF706775, false);
+            context.drawText(textRenderer, Text.literal("/"), searchRight - 18, top + 18, 0xFF706775, false);
+
+            // Content title.
+            context.drawText(textRenderer, Text.literal(TABS[selectedTab]), contentLeft + 24, top + 68, 0xFFF4EDF8, false);
+            context.drawText(textRenderer, Text.literal("Empty"), contentLeft + 24, top + 88, 0xFF6F6673, false);
+
+            // Center empty-state marker.
+            int cx = (contentLeft + right) / 2;
+            int cy = (top + bottom) / 2 + 15;
+            context.fill(cx - 28, cy - 28, cx + 28, cy + 28, 0xFF1B1720);
+            context.drawCenteredTextWithShadow(textRenderer, Text.literal("—"), cx, cy - 4, 0xFF5E5663);
 
             super.render(context, mouseX, mouseY, delta);
         }
@@ -112,10 +129,10 @@ public final class Zik9kClient implements ClientModInitializer {
                 int left = (width - PANEL_WIDTH) / 2;
                 int top = (height - PANEL_HEIGHT) / 2;
 
-                if (mouseX >= left && mouseX <= left + SIDEBAR_WIDTH) {
+                if (mouseX >= left + 10 && mouseX <= left + SIDEBAR_WIDTH - 10) {
                     for (int i = 0; i < TABS.length; i++) {
-                        int tabTop = top + 64 + i * 50;
-                        if (mouseY >= tabTop - 6 && mouseY <= tabTop + 30) {
+                        int tabTop = top + 112 + i * 48;
+                        if (mouseY >= tabTop - 8 && mouseY <= tabTop + 28) {
                             selectedTab = i;
                             return true;
                         }
