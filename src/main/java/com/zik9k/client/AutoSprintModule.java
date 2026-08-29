@@ -15,8 +15,15 @@ public final class AutoSprintModule extends Module {
         boolean shouldSprint = client.options.forwardKey.isPressed()
                 && !client.options.sneakKey.isPressed()
                 && !client.player.isUsingItem()
-                && !client.player.isTouchingWater();
+                && !client.player.isTouchingWater()
+                && client.player.isOnGround()
+                && !client.player.hasVehicle()
+                && client.player.getHungerManager().getFoodLevel() > 6;
 
-        client.player.setSprinting(shouldSprint);
+        // Only request sprint when it is appropriate. We deliberately do not
+        // force sprinting off so vanilla/player state is never overridden.
+        if (shouldSprint) {
+            client.player.setSprinting(true);
+        }
     }
 }
