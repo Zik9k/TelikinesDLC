@@ -169,6 +169,10 @@ public final class Zik9kClient implements ClientModInitializer {
                             client.setScreen(new TriggerBotSettingsScreen(triggerBot, this));
                             return true;
                         }
+                        if (module instanceof ESPModule esp) {
+                            client.setScreen(new ESPSettingsScreen(esp, this));
+                            return true;
+                        }
                         return true;
                     }
                     cardY += 58;
