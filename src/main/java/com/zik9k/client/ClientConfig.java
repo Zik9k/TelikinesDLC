@@ -25,6 +25,8 @@ public final class ClientConfig {
     private static int espRange = 64;
     private static int blockOverlayAlpha = 70;
     private static int blockOverlayOutlineAlpha = 190;
+    private static boolean tracersPlayers = true, tracersMobs = true, tracersAnimals;
+    private static int tracersRange = 64;
 
     private ClientConfig() { }
 
@@ -54,6 +56,10 @@ public final class ClientConfig {
             espRange = clampInt(parseInt(properties.getProperty("espRange"), 64), 8, 128);
             blockOverlayAlpha = clampInt(parseInt(properties.getProperty("blockOverlayAlpha"), 70), 10, 180);
             blockOverlayOutlineAlpha = clampInt(parseInt(properties.getProperty("blockOverlayOutlineAlpha"), 190), 40, 255);
+            tracersPlayers = Boolean.parseBoolean(properties.getProperty("tracersPlayers", "true"));
+            tracersMobs = Boolean.parseBoolean(properties.getProperty("tracersMobs", "true"));
+            tracersAnimals = Boolean.parseBoolean(properties.getProperty("tracersAnimals", "false"));
+            tracersRange = clampInt(parseInt(properties.getProperty("tracersRange"), 64), 8, 128);
         } catch (IOException ignored) { reset(); }
     }
 
@@ -67,8 +73,10 @@ public final class ClientConfig {
             p.setProperty("enabledModules", String.join(",", enabledModules));
             p.setProperty("triggerClickMode", Boolean.toString(triggerClickMode)); p.setProperty("triggerCritMode", Boolean.toString(triggerCritMode));
             p.setProperty("triggerMobs", Boolean.toString(triggerMobs)); p.setProperty("triggerAnimals", Boolean.toString(triggerAnimals)); p.setProperty("triggerPlayers", Boolean.toString(triggerPlayers));
-            p.setProperty("triggerCps", Integer.toString(triggerCps)); p.setProperty("espPlayers", Boolean.toString(espPlayers)); p.setProperty("espMobs", Boolean.toString(espMobs)); p.setProperty("espAnimals", Boolean.toString(espAnimals)); p.setProperty("espRange", Integer.toString(espRange));
+            p.setProperty("triggerCps", Integer.toString(triggerCps));
+            p.setProperty("espPlayers", Boolean.toString(espPlayers)); p.setProperty("espMobs", Boolean.toString(espMobs)); p.setProperty("espAnimals", Boolean.toString(espAnimals)); p.setProperty("espRange", Integer.toString(espRange));
             p.setProperty("blockOverlayAlpha", Integer.toString(blockOverlayAlpha)); p.setProperty("blockOverlayOutlineAlpha", Integer.toString(blockOverlayOutlineAlpha));
+            p.setProperty("tracersPlayers", Boolean.toString(tracersPlayers)); p.setProperty("tracersMobs", Boolean.toString(tracersMobs)); p.setProperty("tracersAnimals", Boolean.toString(tracersAnimals)); p.setProperty("tracersRange", Integer.toString(tracersRange));
             try (OutputStream output = Files.newOutputStream(FILE)) { p.store(output, "TelikinesDLC client configuration"); }
         } catch (IOException ignored) { }
     }
@@ -76,7 +84,8 @@ public final class ClientConfig {
     public static void reset() {
         animations = true; hoverEffects = true; guiScale = 100; overlayOpacity = 54; accent = 0; avatarIndex = 0; enabledModules.clear();
         triggerClickMode = true; triggerCritMode = false; triggerMobs = true; triggerAnimals = false; triggerPlayers = true; triggerCps = 8;
-        espPlayers = true; espMobs = true; espAnimals = false; espRange = 64; blockOverlayAlpha = 70; blockOverlayOutlineAlpha = 190; save();
+        espPlayers = true; espMobs = true; espAnimals = false; espRange = 64; blockOverlayAlpha = 70; blockOverlayOutlineAlpha = 190;
+        tracersPlayers = true; tracersMobs = true; tracersAnimals = false; tracersRange = 64; save();
     }
     private static int parseInt(String value, int fallback) { try { return Integer.parseInt(value); } catch (NumberFormatException ignored) { return fallback; } }
     private static int clampInt(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
@@ -92,4 +101,8 @@ public final class ClientConfig {
     public static boolean espPlayers(){return espPlayers;} public static void setEspPlayers(boolean v){espPlayers=v;save();} public static boolean espMobs(){return espMobs;} public static void setEspMobs(boolean v){espMobs=v;save();} public static boolean espAnimals(){return espAnimals;} public static void setEspAnimals(boolean v){espAnimals=v;save();} public static int espRange(){return espRange;} public static void setEspRange(int v){espRange=clampInt(v,8,128);save();}
     public static int blockOverlayAlpha(){return blockOverlayAlpha;} public static void setBlockOverlayAlpha(int v){blockOverlayAlpha=clampInt(v,10,180);save();}
     public static int blockOverlayOutlineAlpha(){return blockOverlayOutlineAlpha;} public static void setBlockOverlayOutlineAlpha(int v){blockOverlayOutlineAlpha=clampInt(v,40,255);save();}
+    public static boolean tracersPlayers(){return tracersPlayers;} public static void setTracersPlayers(boolean v){tracersPlayers=v;save();}
+    public static boolean tracersMobs(){return tracersMobs;} public static void setTracersMobs(boolean v){tracersMobs=v;save();}
+    public static boolean tracersAnimals(){return tracersAnimals;} public static void setTracersAnimals(boolean v){tracersAnimals=v;save();}
+    public static int tracersRange(){return tracersRange;} public static void setTracersRange(int v){tracersRange=clampInt(v,8,128);save();}
 }
