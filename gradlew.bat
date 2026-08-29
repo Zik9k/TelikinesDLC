@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "GRADLE_VERSION=8.14.3"
+set "GRADLE_VERSION=9.2.0"
 set "GRADLE_HOME=%~dp0.gradle\gradle-%GRADLE_VERSION%"
 if exist "%GRADLE_HOME%\bin\gradle.bat" goto RUN
 set "ZIP=%~dp0.gradle\gradle-%GRADLE_VERSION%-bin.zip"
