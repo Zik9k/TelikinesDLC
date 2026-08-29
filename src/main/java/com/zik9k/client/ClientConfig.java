@@ -21,20 +21,20 @@ public final class ClientConfig {
     private static int avatarIndex = 0;
     private static final Set<String> enabledModules = new LinkedHashSet<>();
 
-    private ClientConfig() {
-    }
+    private static boolean triggerClickMode = true;
+    private static boolean triggerCritMode;
+    private static boolean triggerMobs = true;
+    private static boolean triggerAnimals;
+    private static boolean triggerPlayers = true;
+    private static int triggerCps = 8;
+
+    private ClientConfig() { }
 
     public static void load() {
         try {
-            if (!Files.exists(FILE)) {
-                save();
-                return;
-            }
-
+            if (!Files.exists(FILE)) { save(); return; }
             Properties properties = new Properties();
-            try (InputStream input = Files.newInputStream(FILE)) {
-                properties.load(input);
-            }
+            try (InputStream input = Files.newInputStream(FILE)) { properties.load(input); }
 
             animations = Boolean.parseBoolean(properties.getProperty("animations", "true"));
             hoverEffects = Boolean.parseBoolean(properties.getProperty("hoverEffects", "true"));
@@ -46,14 +46,16 @@ public final class ClientConfig {
             enabledModules.clear();
             String storedModules = properties.getProperty("enabledModules", "");
             if (!storedModules.isBlank()) {
-                Arrays.stream(storedModules.split(","))
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .forEach(enabledModules::add);
+                Arrays.stream(storedModules.split(",")).map(String::trim).filter(name -> !name.isEmpty()).forEach(enabledModules::add);
             }
-        } catch (IOException ignored) {
-            reset();
-        }
+
+            triggerClickMode = Boolean.parseBoolean(properties.getProperty("triggerClickMode", "true"));
+            triggerCritMode = Boolean.parseBoolean(properties.getProperty("triggerCritMode", "false"));
+            triggerMobs = Boolean.parseBoolean(properties.getProperty("triggerMobs", "true"));
+            triggerAnimals = Boolean.parseBoolean(properties.getProperty("triggerAnimals", "false"));
+            triggerPlayers = Boolean.parseBoolean(properties.getProperty("triggerPlayers", "true"));
+            triggerCps = clampInt(parseInt(properties.getProperty("triggerCps"), 8), 1, 20);
+        } catch (IOException ignored) { reset(); }
     }
 
     public static void save() {
@@ -67,35 +69,25 @@ public final class ClientConfig {
             properties.setProperty("accent", Integer.toString(accent));
             properties.setProperty("avatarIndex", Integer.toString(avatarIndex));
             properties.setProperty("enabledModules", String.join(",", enabledModules));
-            try (OutputStream output = Files.newOutputStream(FILE)) {
-                properties.store(output, "TelikinesDLC client configuration");
-            }
-        } catch (IOException ignored) {
-        }
+            properties.setProperty("triggerClickMode", Boolean.toString(triggerClickMode));
+            properties.setProperty("triggerCritMode", Boolean.toString(triggerCritMode));
+            properties.setProperty("triggerMobs", Boolean.toString(triggerMobs));
+            properties.setProperty("triggerAnimals", Boolean.toString(triggerAnimals));
+            properties.setProperty("triggerPlayers", Boolean.toString(triggerPlayers));
+            properties.setProperty("triggerCps", Integer.toString(triggerCps));
+            try (OutputStream output = Files.newOutputStream(FILE)) { properties.store(output, "TelikinesDLC client configuration"); }
+        } catch (IOException ignored) { }
     }
 
     public static void reset() {
-        animations = true;
-        hoverEffects = true;
-        guiScale = 100;
-        overlayOpacity = 54;
-        accent = 0;
-        avatarIndex = 0;
+        animations = true; hoverEffects = true; guiScale = 100; overlayOpacity = 54; accent = 0; avatarIndex = 0;
         enabledModules.clear();
+        triggerClickMode = true; triggerCritMode = false; triggerMobs = true; triggerAnimals = false; triggerPlayers = true; triggerCps = 8;
         save();
     }
 
-    private static int parseInt(String value, int fallback) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return fallback;
-        }
-    }
-
-    private static int clampInt(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
+    private static int parseInt(String value, int fallback) { try { return Integer.parseInt(value); } catch (NumberFormatException ignored) { return fallback; } }
+    private static int clampInt(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
 
     public static boolean animations() { return animations; }
     public static void setAnimations(boolean value) { animations = value; save(); }
@@ -109,14 +101,19 @@ public final class ClientConfig {
     public static void setAccent(int value) { accent = clampInt(value, 0, 2); save(); }
     public static int avatarIndex() { return avatarIndex; }
     public static void setAvatarIndex(int value) { avatarIndex = clampInt(value, 0, 3); save(); }
+    public static boolean isModuleEnabled(String moduleName) { return enabledModules.contains(moduleName); }
+    public static void setModuleEnabled(String moduleName, boolean enabled) { if (enabled) enabledModules.add(moduleName); else enabledModules.remove(moduleName); save(); }
 
-    public static boolean isModuleEnabled(String moduleName) {
-        return enabledModules.contains(moduleName);
-    }
-
-    public static void setModuleEnabled(String moduleName, boolean enabled) {
-        if (enabled) enabledModules.add(moduleName);
-        else enabledModules.remove(moduleName);
-        save();
-    }
+    public static boolean triggerClickMode() { return triggerClickMode; }
+    public static boolean triggerCritMode() { return triggerCritMode; }
+    public static boolean triggerMobs() { return triggerMobs; }
+    public static boolean triggerAnimals() { return triggerAnimals; }
+    public static boolean triggerPlayers() { return triggerPlayers; }
+    public static int triggerCps() { return triggerCps; }
+    public static void setTriggerClickMode(boolean value) { triggerClickMode = value; save(); }
+    public static void setTriggerCritMode(boolean value) { triggerCritMode = value; save(); }
+    public static void setTriggerMobs(boolean value) { triggerMobs = value; save(); }
+    public static void setTriggerAnimals(boolean value) { triggerAnimals = value; save(); }
+    public static void setTriggerPlayers(boolean value) { triggerPlayers = value; save(); }
+    public static void setTriggerCps(int value) { triggerCps = clampInt(value, 1, 20); save(); }
 }
