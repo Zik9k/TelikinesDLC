@@ -7,19 +7,21 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 
 public final class TriggerBotModule extends Module {
-    private boolean clickMode = true;
-    private boolean critMode = false;
-    private boolean targetMobs = true;
+    private boolean clickMode;
+    private boolean critMode;
+    private boolean targetMobs;
     private boolean targetAnimals;
-    private boolean targetPlayers = true;
-    private int clicksPerSecond = 8;
+    private boolean targetPlayers;
+    private int clicksPerSecond;
     private long nextAttackTime;
 
     public TriggerBotModule() {
         super("Trigger Bot", "Attacks the entity under your crosshair automatically", ModuleCategory.COMBAT);
+        loadSettings();
     }
 
     @Override
@@ -38,13 +40,12 @@ public final class TriggerBotModule extends Module {
         long now = System.currentTimeMillis();
         if (now < nextAttackTime) return;
 
-        boolean clickReady = clickMode;
-        boolean critReady = critMode && canCrit(player);
-        if (!clickReady && !critReady) return;
+        if (!clickMode && !critMode) return;
+        if (critMode && !clickMode && !canCrit(player)) return;
 
         client.interactionManager.attackEntity(player, target);
-        player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
-        nextAttackTime = now + Math.max(1L, 1000L / clicksPerSecond);
+        player.swingHand(Hand.MAIN_HAND);
+        nextAttackTime = now + Math.max(1L, 1000L / Math.max(1, clicksPerSecond));
     }
 
     private boolean isSelectedTarget(LivingEntity target) {
@@ -60,30 +61,25 @@ public final class TriggerBotModule extends Module {
         return player.getVelocity().y < -0.08 && player.fallDistance > 0.0f;
     }
 
-    public boolean isClickMode() { return clickMode; }
-    public void setClickMode(boolean value) { clickMode = value; ClientConfig.saveTriggerBot(this); }
-
-    public boolean isCritMode() { return critMode; }
-    public void setCritMode(boolean value) { critMode = value; ClientConfig.saveTriggerBot(this); }
-
-    public boolean isTargetMobs() { return targetMobs; }
-    public void setTargetMobs(boolean value) { targetMobs = value; ClientConfig.saveTriggerBot(this); }
-
-    public boolean isTargetAnimals() { return targetAnimals; }
-    public void setTargetAnimals(boolean value) { targetAnimals = value; ClientConfig.saveTriggerBot(this); }
-
-    public boolean isTargetPlayers() { return targetPlayers; }
-    public void setTargetPlayers(boolean value) { targetPlayers = value; ClientConfig.saveTriggerBot(this); }
-
-    public int getClicksPerSecond() { return clicksPerSecond; }
-    public void setClicksPerSecond(int value) { clicksPerSecond = Math.max(1, Math.min(20, value)); ClientConfig.saveTriggerBot(this); }
-
-    public void loadSettings(boolean click, boolean crit, boolean mobs, boolean animals, boolean players, int cps) {
-        clickMode = click;
-        critMode = crit;
-        targetMobs = mobs;
-        targetAnimals = animals;
-        targetPlayers = players;
-        clicksPerSecond = Math.max(1, Math.min(20, cps));
+    private void loadSettings() {
+        clickMode = ClientConfig.triggerClickMode();
+        critMode = ClientConfig.triggerCritMode();
+        targetMobs = ClientConfig.triggerMobs();
+        targetAnimals = ClientConfig.triggerAnimals();
+        targetPlayers = ClientConfig.triggerPlayers();
+        clicksPerSecond = ClientConfig.triggerCps();
     }
+
+    public boolean isClickMode() { return clickMode; }
+    public void setClickMode(boolean value) { clickMode = value; ClientConfig.setTriggerClickMode(value); }
+    public boolean isCritMode() { return critMode; }
+    public void setCritMode(boolean value) { critMode = value; ClientConfig.setTriggerCritMode(value); }
+    public boolean isTargetMobs() { return targetMobs; }
+    public void setTargetMobs(boolean value) { targetMobs = value; ClientConfig.setTriggerMobs(value); }
+    public boolean isTargetAnimals() { return targetAnimals; }
+    public void setTargetAnimals(boolean value) { targetAnimals = value; ClientConfig.setTriggerAnimals(value); }
+    public boolean isTargetPlayers() { return targetPlayers; }
+    public void setTargetPlayers(boolean value) { targetPlayers = value; ClientConfig.setTriggerPlayers(value); }
+    public int getClicksPerSecond() { return clicksPerSecond; }
+    public void setClicksPerSecond(int value) { clicksPerSecond = Math.max(1, Math.min(20, value)); ClientConfig.setTriggerCps(clicksPerSecond); }
 }
