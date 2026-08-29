@@ -34,7 +34,7 @@ public final class BlockOverlayWorldRenderer {
 
         BlockPos pos = hit.getBlockPos();
         Box box = new Box(pos).expand(0.002D);
-        Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
+        Vec3d camera = context.worldState().cameraRenderState.pos;
         if (camera.squaredDistanceTo(Vec3d.ofCenter(pos)) > 128.0D * 128.0D) return;
 
         float r = 0.70f, g = 0.35f, b = 0.95f;
