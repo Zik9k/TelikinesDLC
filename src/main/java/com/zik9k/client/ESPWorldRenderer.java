@@ -1,5 +1,7 @@
 package com.zik9k.client;
 
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.DrawStyle;
 import net.minecraft.entity.Entity;
@@ -8,9 +10,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.debug.gizmo.GizmoDrawing;
-
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 
 /** Draws ESP as translucent filled entity hitboxes, with no direction arrow. */
 public final class ESPWorldRenderer {
@@ -32,9 +31,9 @@ public final class ESPWorldRenderer {
         if (esp == null || !esp.isEnabled()) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || context.camera() == null) return;
+        if (client.world == null || client.player == null) return;
 
-        Vec3d camera = context.camera().getCameraPos();
+        Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
         for (Entity entity : client.world.getEntities()) {
             if (!(entity instanceof LivingEntity living) || living == client.player) continue;
             if (!esp.isSelected(living)) continue;
