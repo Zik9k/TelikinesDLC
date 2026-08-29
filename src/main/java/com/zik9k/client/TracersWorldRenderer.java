@@ -32,7 +32,7 @@ public final class TracersWorldRenderer {
         VertexConsumer consumers = context.consumers() == null ? null : context.consumers().getBuffer(RenderLayers.lines());
         if (consumers == null) return;
 
-        Vec3d cameraPos = client.gameRenderer.getCamera().getCameraPos();
+        Vec3d cameraPos = context.worldState().cameraRenderState.pos;
         float tickProgress = client.getRenderTickCounter().getTickProgress(false);
         Vec3d start = client.player.getLerpedPos(tickProgress).add(0.0, client.player.getStandingEyeHeight() * 0.5, 0.0);
         context.matrices().push();
@@ -45,7 +45,9 @@ public final class TracersWorldRenderer {
             if (cameraPos.squaredDistanceTo(pos) > (double) module.range() * module.range()) continue;
 
             float[] color = module.colorFor(living);
-            line(context, consumers, start, pos, color[0], color[1], color[2], color[3]);
+            Vec3d relativeStart = start.subtract(cameraPos);
+            Vec3d relativePos = pos.subtract(cameraPos);
+            line(context, consumers, relativeStart, relativePos, color[0], color[1], color[2], color[3]);
         }
 
         context.matrices().pop();
