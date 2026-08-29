@@ -15,6 +15,7 @@ public final class ClientConfig {
     private static int guiScale = 100;
     private static int overlayOpacity = 54;
     private static int accent = 0;
+    private static int avatarIndex = 0;
 
     private ClientConfig() {
     }
@@ -36,6 +37,7 @@ public final class ClientConfig {
             guiScale = clampInt(parseInt(properties.getProperty("guiScale"), 100), 80, 125);
             overlayOpacity = clampInt(parseInt(properties.getProperty("overlayOpacity"), 54), 20, 85);
             accent = clampInt(parseInt(properties.getProperty("accent"), 0), 0, 2);
+            avatarIndex = clampInt(parseInt(properties.getProperty("avatarIndex"), 0), 0, 3);
         } catch (IOException ignored) {
             reset();
         }
@@ -50,6 +52,7 @@ public final class ClientConfig {
             properties.setProperty("guiScale", Integer.toString(guiScale));
             properties.setProperty("overlayOpacity", Integer.toString(overlayOpacity));
             properties.setProperty("accent", Integer.toString(accent));
+            properties.setProperty("avatarIndex", Integer.toString(avatarIndex));
             try (OutputStream output = Files.newOutputStream(FILE)) {
                 properties.store(output, "TelikinesDLC client configuration");
             }
@@ -63,6 +66,7 @@ public final class ClientConfig {
         guiScale = 100;
         overlayOpacity = 54;
         accent = 0;
+        avatarIndex = 0;
         save();
     }
 
@@ -78,48 +82,16 @@ public final class ClientConfig {
         return Math.max(min, Math.min(max, value));
     }
 
-    public static boolean animations() {
-        return animations;
-    }
-
-    public static void setAnimations(boolean value) {
-        animations = value;
-        save();
-    }
-
-    public static boolean hoverEffects() {
-        return hoverEffects;
-    }
-
-    public static void setHoverEffects(boolean value) {
-        hoverEffects = value;
-        save();
-    }
-
-    public static int guiScale() {
-        return guiScale;
-    }
-
-    public static void setGuiScale(int value) {
-        guiScale = clampInt(value, 80, 125);
-        save();
-    }
-
-    public static int overlayOpacity() {
-        return overlayOpacity;
-    }
-
-    public static void setOverlayOpacity(int value) {
-        overlayOpacity = clampInt(value, 20, 85);
-        save();
-    }
-
-    public static int accent() {
-        return accent;
-    }
-
-    public static void setAccent(int value) {
-        accent = clampInt(value, 0, 2);
-        save();
-    }
+    public static boolean animations() { return animations; }
+    public static void setAnimations(boolean value) { animations = value; save(); }
+    public static boolean hoverEffects() { return hoverEffects; }
+    public static void setHoverEffects(boolean value) { hoverEffects = value; save(); }
+    public static int guiScale() { return guiScale; }
+    public static void setGuiScale(int value) { guiScale = clampInt(value, 80, 125); save(); }
+    public static int overlayOpacity() { return overlayOpacity; }
+    public static void setOverlayOpacity(int value) { overlayOpacity = clampInt(value, 20, 85); save(); }
+    public static int accent() { return accent; }
+    public static void setAccent(int value) { accent = clampInt(value, 0, 2); save(); }
+    public static int avatarIndex() { return avatarIndex; }
+    public static void setAvatarIndex(int value) { avatarIndex = clampInt(value, 0, 3); save(); }
 }
