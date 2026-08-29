@@ -33,7 +33,7 @@ public final class ESPWorldRenderer {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null || client.player == null) return;
 
-        Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
+        Vec3d camera = context.worldState().cameraRenderState.pos;
         for (Entity entity : client.world.getEntities()) {
             if (!(entity instanceof LivingEntity living) || living == client.player) continue;
             if (!esp.isSelected(living)) continue;
