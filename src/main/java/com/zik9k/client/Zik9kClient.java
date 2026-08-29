@@ -166,7 +166,7 @@ public final class Zik9kClient implements ClientModInitializer {
                     if (cardY > bottom - 28) break;
                     if (mouseX >= cardX && mouseX <= cardRight && mouseY >= cardY && mouseY <= cardY + 48) {
                         if (module instanceof TriggerBotModule triggerBot) {
-                            client.setScreen(new TriggerBotSettingsScreen(triggerBot));
+                            client.setScreen(new TriggerBotSettingsScreen(triggerBot, this));
                             return true;
                         }
                         return true;
