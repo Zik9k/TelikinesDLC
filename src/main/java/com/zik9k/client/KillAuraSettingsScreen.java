@@ -1,7 +1,9 @@
 package com.zik9k.client;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -77,34 +79,35 @@ public final class KillAuraSettingsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
-        if (button != 0) return super.mouseClicked(mx, my, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mx = click.x(), my = click.y();
+        if (click.button() != 0) return super.mouseClicked(click, doubled);
         int l = left(), t = top();
         if (inside(mx, my, l + 167, t + 86, 58, 24)) { module.setPlayers(!module.players()); return true; }
         if (inside(mx, my, l + 417, t + 86, 58, 24)) { module.setMobs(!module.mobs()); return true; }
         if (inside(mx, my, l + 167, t + 130, 58, 24)) { module.setAnimals(!module.animals()); return true; }
         if (mx >= l + 197 && mx <= l + 412 && my >= t + 164 && my <= t + 198) { draggingRange = true; updateRange(mx); return true; }
         if (mx >= l + 197 && mx <= l + 412 && my >= t + 218 && my <= t + 252) { draggingCps = true; updateCps(mx); return true; }
-        return super.mouseClicked(mx, my, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-        if (button == 0 && draggingRange) { updateRange(mx); return true; }
-        if (button == 0 && draggingCps) { updateCps(mx); return true; }
-        return super.mouseDragged(mx, my, button, dx, dy);
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (click.button() == 0 && draggingRange) { updateRange(click.x()); return true; }
+        if (click.button() == 0 && draggingCps) { updateCps(click.x()); return true; }
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mx, double my, int button) {
-        if (button == 0) { draggingRange = false; draggingCps = false; }
-        return super.mouseReleased(mx, my, button);
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0) { draggingRange = false; draggingCps = false; }
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        return super.keyPressed(input);
     }
 
     @Override public void close() { if (client != null) client.setScreen(parent); }
