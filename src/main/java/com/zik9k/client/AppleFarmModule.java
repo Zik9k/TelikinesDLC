@@ -175,7 +175,7 @@ public final class AppleFarmModule extends Module {
     private boolean moveTo(ClientPlayerEntity player, BlockPos target, State nextState) {
         if (target == null) { setEnabled(false); return false; }
         Vec3d destination = Vec3d.ofCenter(target);
-        Vec3d delta = destination.subtract(player.getPos());
+        Vec3d delta = destination.subtract(new Vec3d(player.getX(), player.getY(), player.getZ()));
         if (delta.horizontalLengthSquared() < 4.0D && Math.abs(delta.y) < 2.5D) { state = nextState; return true; }
         Vec3d horizontal = new Vec3d(delta.x, 0.0D, delta.z);
         if (horizontal.lengthSquared() > 0.01D) horizontal = horizontal.normalize().multiply(0.16D);
