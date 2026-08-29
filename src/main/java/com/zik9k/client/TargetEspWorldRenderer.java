@@ -3,9 +3,8 @@ package com.zik9k.client;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Vec3d;
@@ -24,7 +23,7 @@ public final class TargetEspWorldRenderer {
 
     private static void render(WorldRenderContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null || client.player == null || context.consumers() == null) return;
+        if (client.world == null || client.player == null || context.consumers() == null || context.camera() == null) return;
 
         LivingEntity target = null;
         for (Module module : ModuleManager.getModules()) {
@@ -49,7 +48,7 @@ public final class TargetEspWorldRenderer {
             attackFlashUntil = System.currentTimeMillis() + 150L;
         }
         previousCooldown = cooldown;
-        boolean hitFlash = client.options.attackKey.isPressed() || System.currentTimeMillis() < attackFlashUntil;
+        boolean hitFlash = target.hurtTime > 0 || System.currentTimeMillis() < attackFlashUntil;
 
         int accent = switch (ClientConfig.accent()) {
             case 1 -> 0xFF8D67FF;
@@ -57,8 +56,8 @@ public final class TargetEspWorldRenderer {
             default -> 0xFFB15CFF;
         };
         float r = hitFlash ? 1.0F : ((accent >> 16) & 0xFF) / 255.0F;
-        float g = hitFlash ? 0.16F : ((accent >> 8) & 0xFF) / 255.0F;
-        float b = hitFlash ? 0.16F : (accent & 0xFF) / 255.0F;
+        float g = hitFlash ? 0.10F : ((accent >> 8) & 0xFF) / 255.0F;
+        float b = hitFlash ? 0.10F : (accent & 0xFF) / 255.0F;
 
         Vector3fc horizontal = context.camera().getHorizontalPlane();
         Vector3fc vertical = context.camera().getVerticalPlane();
@@ -74,7 +73,7 @@ public final class TargetEspWorldRenderer {
 
         context.matrices().push();
         context.matrices().translate(-camera.x, -camera.y, -camera.z);
-        VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
+        VertexConsumer consumer = context.consumers().getBuffer(RenderLayers.lines());
 
         drawCorner(context, consumer, center, u, v, size, segment, 1, 1, r, g, b);
         drawCorner(context, consumer, center, u, v, size, segment, -1, 1, r, g, b);
