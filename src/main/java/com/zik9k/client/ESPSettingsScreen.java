@@ -1,7 +1,9 @@
 package com.zik9k.client;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -69,43 +71,28 @@ public final class ESPSettingsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
-        int left = left(), top = top(), right = left + WIDTH;
-
-        if (inside(mouseX, mouseY, left + 167, top + 86, 58, 24)) {
-            module.setPlayers(!module.players());
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 417, top + 86, 58, 24)) {
-            module.setMobs(!module.mobs());
-            return true;
-        }
-        if (inside(mouseX, mouseY, left + 167, top + 130, 58, 24)) {
-            module.setAnimals(!module.animals());
-            return true;
-        }
-        if (mouseY >= top + 190 && mouseY <= top + 220) {
-            draggingRange = true;
-            updateRange(mouseX);
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x(), mouseY = click.y();
+        int button = click.button();
+        if (button != 0) return super.mouseClicked(click, doubled);
+        int left = left(), top = top();
+        if (inside(mouseX, mouseY, left + 167, top + 86, 58, 24)) { module.setPlayers(!module.players()); return true; }
+        if (inside(mouseX, mouseY, left + 417, top + 86, 58, 24)) { module.setMobs(!module.mobs()); return true; }
+        if (inside(mouseX, mouseY, left + 167, top + 130, 58, 24)) { module.setAnimals(!module.animals()); return true; }
+        if (mouseY >= top + 190 && mouseY <= top + 220) { draggingRange = true; updateRange(mouseX); return true; }
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (draggingRange && button == 0) {
-            updateRange(mouseX);
-            return true;
-        }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (draggingRange && click.button() == 0) { updateRange(click.x()); return true; }
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) draggingRange = false;
-        return super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0) draggingRange = false;
+        return super.mouseReleased(click);
     }
 
     private static boolean inside(double mouseX, double mouseY, int x, int y, int w, int h) {
@@ -113,12 +100,9 @@ public final class ESPSettingsScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        return super.keyPressed(input);
     }
 
     @Override
