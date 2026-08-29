@@ -1,5 +1,5 @@
 #!/bin/sh
-GRADLE_VERSION=8.14.3
+GRADLE_VERSION=9.2.0
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 GRADLE_HOME="$ROOT_DIR/.gradle/gradle-$GRADLE_VERSION"
 if [ ! -x "$GRADLE_HOME/bin/gradle" ]; then
