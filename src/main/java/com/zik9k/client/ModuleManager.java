@@ -20,6 +20,7 @@ public final class ModuleManager {
         register(new TriggerBotModule());
         register(new ESPModule());
         register(new BlockOverlayModule());
+        register(new TracersModule());
 
         for (Module module : MODULES) {
             if (ClientConfig.isModuleEnabled(module.getName())) module.setEnabled(true);
