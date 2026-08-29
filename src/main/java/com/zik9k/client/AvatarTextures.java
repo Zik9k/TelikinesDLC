@@ -14,10 +14,10 @@ import java.util.Base64;
 public final class AvatarTextures {
     private static final String[] NAMES = {"Dog", "Green", "Squirrel", "Chef"};
     private static final String[] DATA = {
-        "REPLACE_DOG",
-        "REPLACE_GREEN",
-        "REPLACE_SQUIRREL",
-        "REPLACE_CHEF"
+        "" ,
+        "" ,
+        "" ,
+        ""
     };
 
     private static final boolean[] LOADED = new boolean[DATA.length];
@@ -25,8 +25,12 @@ public final class AvatarTextures {
     private AvatarTextures() {
     }
 
-    public static String[] getNames() {
-        return NAMES.clone();
+    public static int count() {
+        return DATA.length;
+    }
+
+    public static String getName(int index) {
+        return NAMES[Math.floorMod(index, NAMES.length)];
     }
 
     public static void draw(DrawContext context, MinecraftClient client, int index, int x, int y, int size) {
