@@ -116,7 +116,10 @@ public final class ClientConfig {
         tracersPlayers = true; tracersMobs = true; tracersAnimals = false; tracersRange = 64;
         killAuraPlayers = true; killAuraMobs = true; killAuraAnimals = false; killAuraRange = 4; killAuraCps = 8; save();
     }
-    private static int parseInt(String value, int fallback) { try { return Integer.decode(value); } catch (NumberFormatException ignored) { return fallback; } }
+    private static int parseInt(String value, int fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try { return Integer.decode(value.trim()); } catch (NumberFormatException ignored) { return fallback; }
+    }
     private static int clampInt(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
     public static boolean animations() { return animations; } public static void setAnimations(boolean v) { animations=v; save(); }
     public static boolean hoverEffects() { return hoverEffects; } public static void setHoverEffects(boolean v) { hoverEffects=v; save(); }
