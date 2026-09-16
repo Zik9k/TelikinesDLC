@@ -13,7 +13,6 @@ public final class SettingsScreen extends Screen {
     private boolean resetConfirm;
 
     public SettingsScreen() { super(Text.literal("TelikinesDLC Settings")); }
-
     @Override protected void init() { }
     private int left() { return (width - WIDTH) / 2; }
     private int top() { return (height - HEIGHT) / 2; }
@@ -28,13 +27,11 @@ public final class SettingsScreen extends Screen {
         context.fill(left, top + 2, right, bottom - 2, 0xFF17131F);
         context.fill(left + 2, top + 2, right - 2, top + 50, 0xFF1A1622);
         context.fill(left + 2, top + 2, left + 6, bottom - 2, accent);
-
         context.drawText(textRenderer, Text.literal("SETTINGS"), left + 20, top + 17, 0xFFF4EEF9, true);
         context.drawText(textRenderer, Text.literal("TelikinesDLC configuration"), left + 110, top + 18, 0xFF776E7E, false);
 
         drawToggle(context, left + 22, top + 68, "Animations", ClientConfig.animations(), mouseX, mouseY);
         drawToggle(context, left + 22, top + 108, "Hover effects", ClientConfig.hoverEffects(), mouseX, mouseY);
-
         drawSlider(context, left + 22, top + 157, "GUI scale", ClientConfig.guiScale(), 80, 125, "%d%%", mouseX, mouseY);
         drawSlider(context, left + 22, top + 207, "Overlay opacity", ClientConfig.overlayOpacity(), 20, 85, "%d%%", mouseX, mouseY);
 
@@ -59,7 +56,6 @@ public final class SettingsScreen extends Screen {
         context.fill(left + 155, bottom - 52, left + 300, bottom - 27, 0xFF2A2232);
         context.drawText(textRenderer, Text.literal("HUD Editor"), left + 188, bottom - 45, 0xFFE8DFF0, false);
         context.drawText(textRenderer, Text.literal("ESC  Back"), right - 88, bottom - 45, 0xFF8F8794, false);
-
         if (resetConfirm) {
             context.fill(left + 130, top + 125, right - 130, top + 235, 0xFF211B27);
             context.drawCenteredTextWithShadow(textRenderer, Text.literal("Reset all settings?"), width / 2, top + 145, 0xFFF0E9F2);
@@ -75,7 +71,6 @@ public final class SettingsScreen extends Screen {
         c.fill(bx, y, bx + 50, y + 24, enabled ? (ClientConfig.hudColor() & 0x00FFFFFF) | 0xFF300F3F : hovered ? 0xFF2E2833 : 0xFF24202B);
         c.drawText(textRenderer, Text.literal(enabled ? "ON" : "OFF"), bx + 15, y + 5, enabled ? 0xFFE9D6F4 : 0xFF827984, false);
     }
-
     private void drawSlider(DrawContext c, int x, int y, String label, int value, int min, int max, String format, int mx, int my) {
         c.drawText(textRenderer, Text.literal(label), x, y + 4, 0xFFD8CFDD, false);
         c.drawText(textRenderer, Text.literal(String.format(format, value)), x + 455, y + 4, 0xFFAAA0AE, false);
@@ -85,7 +80,6 @@ public final class SettingsScreen extends Screen {
         c.fill(barLeft, barY, fill, barY + 4, ClientConfig.hudColor());
         c.fill(fill - 4, barY - 4, fill + 4, barY + 8, 0xFFE6C8F0);
     }
-
     private void drawPlan(DrawContext c, int x, int y, String name, boolean selected) {
         c.fill(x, y, x + 100, y + 28, selected ? 0xFF3A2748 : 0xFF24202B);
         c.drawText(textRenderer, Text.literal(name), x + 33, y + 7, selected ? ClientConfig.hudColor() : 0xFF8B8290, false);
@@ -107,7 +101,6 @@ public final class SettingsScreen extends Screen {
         if (inside(mx, my, left + 22, bottom - 52, 113, 25)) { if (resetConfirm) { ClientConfig.reset(); resetConfirm = false; } else resetConfirm = true; return true; }
         return super.mouseClicked(click, doubled);
     }
-
     private static boolean inside(double mx, double my, int x, int y, int w, int h) { return mx >= x && mx <= x + w && my >= y && my <= y + h; }
     private static int sliderValue(double mx, int left, int right, int min, int max) { double t = Math.max(0, Math.min(1, (mx-left)/(double)(right-left))); return min + (int)Math.round((max-min)*t); }
     @Override public boolean keyPressed(KeyInput input) { if (input.key() == GLFW.GLFW_KEY_ESCAPE) { close(); return true; } return super.keyPressed(input); }
