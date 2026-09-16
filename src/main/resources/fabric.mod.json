@@ -8,7 +8,8 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.zik9k.client.Zik9kClient"
+      "com.zik9k.client.Zik9kClient",
+      "com.zik9k.client.CosmeticsClient"
     ]
   },
   "depends": {
