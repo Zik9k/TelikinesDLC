@@ -1,13 +1,16 @@
 package com.zik9k.client;
 
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.KeyBinding;
@@ -23,22 +26,31 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CosmeticsClient implements ClientModInitializer {
-    private static KeyBinding openKey;
+public final class CosmeticsClient {
+    private static boolean initialized;
 
-    @Override
-    public void onInitializeClient() {
-        openKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.zik9k.cosmetics",
-                net.minecraft.client.util.InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_K,
-                KeyBinding.Category.MISC
-        ));
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (openKey.wasPressed() && client.currentScreen == null) {
-                client.setScreen(new WardrobeScreen());
-            }
+    private CosmeticsClient() {}
+
+    /** Called once from the main client initializer. */
+    public static void init() {
+        if (initialized) return;
+        initialized = true;
+
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (!(screen instanceof GameMenuScreen)) return;
+
+            // The reference video places the Cosmetics button to the right of the vanilla pause menu.
+            int buttonWidth = 120;
+            int buttonHeight = 20;
+            int x = scaledWidth / 2 + 110;
+            int y = scaledHeight / 2 + 26;
+
+            Screens.getButtons(screen).add(ButtonWidget.builder(
+                    Text.literal("Косметика"),
+                    button -> client.setScreen(new WardrobeScreen(screen))
+            ).dimensions(x, y, buttonWidth, buttonHeight).build());
         });
+
         WorldRenderEvents.AFTER_ENTITIES.register(CosmeticsClient::renderWorldCosmetics);
     }
 
@@ -113,17 +125,18 @@ public final class CosmeticsClient implements ClientModInitializer {
     }
 
     private static final class WardrobeScreen extends Screen {
+        private final Screen parent;
         private int selected = 0;
         private String search = "";
         private boolean searchFocused;
-        private long lastBlink;
-        private boolean cursorVisible = true;
 
-        protected WardrobeScreen() { super(Text.literal("Гардероб")); }
+        protected WardrobeScreen(Screen parent) {
+            super(Text.literal("Гардероб"));
+            this.parent = parent;
+        }
 
         @Override protected void init() {
             searchFocused = false;
-            lastBlink = System.currentTimeMillis();
         }
 
         private int left() { return (width - 860) / 2; }
@@ -131,7 +144,10 @@ public final class CosmeticsClient implements ClientModInitializer {
         private Category category() { return Category.values()[selected]; }
         private List<Cosmetic> filtered() {
             String q = search.toLowerCase();
-            return COSMETICS.stream().filter(c -> c.category == category()).filter(c -> q.isBlank() || c.name.toLowerCase().contains(q)).toList();
+            return COSMETICS.stream()
+                    .filter(c -> c.category == category())
+                    .filter(c -> q.isBlank() || c.name.toLowerCase().contains(q))
+                    .toList();
         }
 
         @Override public void render(DrawContext c, int mx, int my, float delta) {
@@ -160,9 +176,6 @@ public final class CosmeticsClient implements ClientModInitializer {
             c.fill(searchL, t + 54, searchR, t + 82, searchFocused ? 0xFF302838 : 0xFF25202B);
             String vis = search.length() > 24 ? search.substring(0, 24) : search;
             c.drawText(textRenderer, Text.literal(vis.isBlank() ? "Поиск" : vis), searchL + 10, t + 63, vis.isBlank() ? 0xFF756A78 : 0xFFE8E0EA, false);
-            if (searchFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
-                c.fill(searchL + 10 + textRenderer.getWidth(vis), t + 61, searchL + 11 + textRenderer.getWidth(vis), t + 75, 0xFFE8E0EA);
-            }
 
             List<Cosmetic> items = filtered();
             int cardW = 142, cardH = 132, gap = 10;
@@ -191,12 +204,11 @@ public final class CosmeticsClient implements ClientModInitializer {
             boolean hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
             boolean equipped = CosmeticsState.isEquipped(item.id);
             c.fill(x, y, x + w, y + h, hover ? 0xFF2A2330 : 0xFF1C1821);
-            int col = item.color;
-            c.fill(x + 18, y + 14, x + 58, y + 54, col);
+            c.fill(x + 18, y + 14, x + 58, y + 54, item.color);
             c.drawText(textRenderer, Text.literal(item.name), x + 10, y + 69, 0xFFEAE2EC, false);
             if (!item.unlocked) {
                 c.fill(x + w - 36, y + 12, x + w - 14, y + 34, 0xCC3E3844);
-                c.drawText(textRenderer, Text.literal("🔒"), x + w - 34, y + 17, 0xFFE8E0EA, false);
+                c.drawText(textRenderer, Text.literal("LOCK"), x + w - 33, y + 17, 0xFFE8E0EA, false);
             } else {
                 String state = equipped ? "НАДЕТО" : "НАДЕТЬ";
                 c.drawText(textRenderer, Text.literal(state), x + 10, y + 95, equipped ? 0xFF69E6A6 : 0xFF9D8BA5, false);
