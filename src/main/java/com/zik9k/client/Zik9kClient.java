@@ -27,6 +27,7 @@ public final class Zik9kClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
         ClientConfig.load();
         ModuleManager.init();
+        CosmeticsClient.init();
         ESPWorldRenderer.register();
         BlockOverlayWorldRenderer.register();
         TracersWorldRenderer.register();
