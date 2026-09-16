@@ -19,7 +19,7 @@ public final class ClientConfig {
     private static int hudKeybindX = 8, hudKeybindY = 8;
     private static int hudInfoX = 8, hudInfoY = 0;
     private static int hudStaffX = 8, hudStaffY = 62;
-    private static String plan = "FREE";
+    private static String plan = "PLUS";
     private static final Set<String> enabledModules = new LinkedHashSet<>();
     private static boolean triggerClickMode = true, triggerCritMode, triggerMobs = true, triggerAnimals, triggerPlayers = true;
     private static int triggerCps = 8;
@@ -53,7 +53,7 @@ public final class ClientConfig {
             hudInfoY = clampInt(parseInt(p.getProperty("hudInfoY"), 0), 0, 3000);
             hudStaffX = clampInt(parseInt(p.getProperty("hudStaffX"), 8), 0, 3000);
             hudStaffY = clampInt(parseInt(p.getProperty("hudStaffY"), 62), 0, 3000);
-            plan = p.getProperty("plan", "FREE").equalsIgnoreCase("PLUS") ? "PLUS" : "FREE";
+            plan = "PLUS";
             enabledModules.clear();
             String stored = p.getProperty("enabledModules", "");
             if (!stored.isBlank()) Arrays.stream(stored.split(",")).map(String::trim).filter(n -> !n.isEmpty()).forEach(enabledModules::add);
@@ -78,6 +78,7 @@ public final class ClientConfig {
             killAuraAnimals = Boolean.parseBoolean(p.getProperty("killAuraAnimals", "false"));
             killAuraRange = clampInt(parseInt(p.getProperty("killAuraRange"), 4), 3, 6);
             killAuraCps = clampInt(parseInt(p.getProperty("killAuraCps"), 8), 1, 20);
+            save();
         } catch (IOException ignored) { reset(); }
     }
 
@@ -93,7 +94,7 @@ public final class ClientConfig {
             p.setProperty("hudKeybindX", Integer.toString(hudKeybindX)); p.setProperty("hudKeybindY", Integer.toString(hudKeybindY));
             p.setProperty("hudInfoX", Integer.toString(hudInfoX)); p.setProperty("hudInfoY", Integer.toString(hudInfoY));
             p.setProperty("hudStaffX", Integer.toString(hudStaffX)); p.setProperty("hudStaffY", Integer.toString(hudStaffY));
-            p.setProperty("plan", plan);
+            p.setProperty("plan", "PLUS");
             p.setProperty("enabledModules", String.join(",", enabledModules));
             p.setProperty("triggerClickMode", Boolean.toString(triggerClickMode)); p.setProperty("triggerCritMode", Boolean.toString(triggerCritMode));
             p.setProperty("triggerMobs", Boolean.toString(triggerMobs)); p.setProperty("triggerAnimals", Boolean.toString(triggerAnimals)); p.setProperty("triggerPlayers", Boolean.toString(triggerPlayers));
@@ -109,17 +110,14 @@ public final class ClientConfig {
 
     public static void reset() {
         animations = true; hoverEffects = true; guiScale = 100; overlayOpacity = 54; accent = 0; avatarIndex = 0;
-        hudColor = 0xFFB15CFF; hudActiveX = 8; hudActiveY = 8; hudKeybindX = 8; hudKeybindY = 8; hudInfoX = 8; hudInfoY = 0; hudStaffX = 8; hudStaffY = 62; plan = "FREE"; enabledModules.clear();
+        hudColor = 0xFFB15CFF; hudActiveX = 8; hudActiveY = 8; hudKeybindX = 8; hudKeybindY = 8; hudInfoX = 8; hudInfoY = 0; hudStaffX = 8; hudStaffY = 62; plan = "PLUS"; enabledModules.clear();
         triggerClickMode = true; triggerCritMode = false; triggerMobs = true; triggerAnimals = false; triggerPlayers = true; triggerCps = 8;
         espPlayers = true; espMobs = true; espAnimals = false; espRange = 64;
         blockOverlayAlpha = 70; blockOverlayOutlineAlpha = 190;
         tracersPlayers = true; tracersMobs = true; tracersAnimals = false; tracersRange = 64;
         killAuraPlayers = true; killAuraMobs = true; killAuraAnimals = false; killAuraRange = 4; killAuraCps = 8; save();
     }
-    private static int parseInt(String value, int fallback) {
-        if (value == null || value.isBlank()) return fallback;
-        try { return Integer.decode(value.trim()); } catch (NumberFormatException ignored) { return fallback; }
-    }
+    private static int parseInt(String value, int fallback) { if (value == null || value.isBlank()) return fallback; try { return Integer.decode(value.trim()); } catch (NumberFormatException ignored) { return fallback; } }
     private static int clampInt(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
     public static boolean animations() { return animations; } public static void setAnimations(boolean v) { animations=v; save(); }
     public static boolean hoverEffects() { return hoverEffects; } public static void setHoverEffects(boolean v) { hoverEffects=v; save(); }
@@ -133,7 +131,7 @@ public final class ClientConfig {
     public static int hudKeybindX(){return hudKeybindX;} public static int hudKeybindY(){return hudKeybindY;} public static void setHudKeybindPos(int x,int y){hudKeybindX=Math.max(0,x);hudKeybindY=Math.max(0,y);save();}
     public static int hudInfoX(){return hudInfoX;} public static int hudInfoY(){return hudInfoY;} public static void setHudInfoPos(int x,int y){hudInfoX=Math.max(0,x);hudInfoY=Math.max(0,y);save();}
     public static int hudStaffX(){return hudStaffX;} public static int hudStaffY(){return hudStaffY;} public static void setHudStaffPos(int x,int y){hudStaffX=Math.max(0,x);hudStaffY=Math.max(0,y);save();}
-    public static boolean isPlus(){return "PLUS".equals(plan);} public static String plan(){return plan;} public static void setPlan(String value){plan="PLUS".equalsIgnoreCase(value)?"PLUS":"FREE";save();}
+    public static boolean isPlus(){return true;} public static String plan(){return "PLUS";} public static void setPlan(String value){plan="PLUS";save();}
     public static boolean isModuleEnabled(String n) { return enabledModules.contains(n); } public static void setModuleEnabled(String n, boolean e) { if(e) enabledModules.add(n); else enabledModules.remove(n); save(); }
     public static boolean triggerClickMode() { return triggerClickMode; } public static boolean triggerCritMode() { return triggerCritMode; } public static boolean triggerMobs() { return triggerMobs; } public static boolean triggerAnimals() { return triggerAnimals; } public static boolean triggerPlayers() { return triggerPlayers; } public static int triggerCps() { return triggerCps; }
     public static void setTriggerClickMode(boolean v){triggerClickMode=v;save();} public static void setTriggerCritMode(boolean v){triggerCritMode=v;save();} public static void setTriggerMobs(boolean v){triggerMobs=v;save();} public static void setTriggerAnimals(boolean v){triggerAnimals=v;save();} public static void setTriggerPlayers(boolean v){triggerPlayers=v;save();} public static void setTriggerCps(int v){triggerCps=clampInt(v,1,20);save();}
