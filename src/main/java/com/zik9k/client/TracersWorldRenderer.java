@@ -47,4 +47,4 @@ public final class TracersWorldRenderer {
             GizmoDrawing.line(start, pos, packedColor, 1.5F);
         }
     }
-}"}
+}
