@@ -1,0 +1,3 @@
+# Cosmetics
+
+Open: **Esc → Косметика**.
